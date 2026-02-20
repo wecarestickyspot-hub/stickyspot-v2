@@ -1,0 +1,247 @@
+// Connection setup
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// 🔴 ENUMS (Data Integrity)
+// ==========================================
+enum OrderStatus {
+  PENDING
+  UNVERIFIED
+  PAID
+  PROCESSING
+  PRINTING    // ✅ Added for Admin Action
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED    // ✅ Added for Refunds
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+// ==========================================
+// 1. BUNDLE TABLES (Explicit Join Table)
+// ==========================================
+model Bundle {
+  id          String  @id @default(cuid())
+  title       String
+  slug        String  @unique
+  description String
+  price       Float // Bundle ki special discounted price
+  image       String // Bundle cover image
+  isActive    Boolean @default(true)
+
+  // Relation via Join Table
+  products BundleProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 🚀 Explicit Join Table for Bundle <-> Product
+model BundleProduct {
+  id        String @id @default(cuid())
+  bundleId  String
+  productId String
+
+  bundle  Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Prevent duplicate products in the same bundle
+  @@unique([bundleId, productId])
+}
+
+// ==========================================
+// 2. ORDER TABLE (✨ UPDATED)
+// ==========================================
+model Order {
+  id String @id @default(cuid())
+
+  // User ID (Taki "My Orders" page chal sake)
+  userId String? // Clerk User ID (Optional for guest checkouts)
+
+  // Customer Details
+  customerName String
+  email        String
+  phone        String
+  address      String // Full address string
+
+  // Shiprocket ke liye mandatory fields
+  city    String?
+  state   String?
+  pincode String?
+
+  razorpayOrderId String?     @unique // 👈 Razorpay ka Order ID (order_123...)
+  expiresAt       DateTime?           // 👈 Abandoned cart clean karne ke liye
+
+  // Payment Details
+  status    OrderStatus @default(PENDING)
+  paymentId String?
+  
+
+
+  // 💰 FINANCIAL BREAKDOWN (Ye fields missing the!)
+  subtotal       Float @default(0) // Items ka total price
+  shippingCost   Float @default(0) // Shipping charge
+  discountAmount Float @default(0) // Discount kitna mila
+  amount         Float             // Final Amount Paid (Grand Total)
+
+  // Tracking (Admin panel se yahan AWB save hoga)
+  trackingNumber String? // Shiprocket AWB
+  trackingUrl    String?
+  shipmentId     String?
+  courierName    String? // Delivery/Xpressbees etc.
+
+  // Coupon Info
+  couponCode      String? // Optional
+
+  createdAt DateTime @default(now())
+
+  items OrderItem[]
+
+  // Fast Query Indexing
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==========================================
+// 3. ORDER ITEMS TABLE
+// ==========================================
+model OrderItem {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  // Snapshot Protection (Safe Relation)
+  product   Product? @relation(fields: [productId], references: [id])
+
+  title    String
+  quantity Int
+  price    Float
+  image    String? // Product snapshot
+}
+
+// ==========================================
+// 4. PRODUCT TABLE
+// ==========================================
+model Product {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  description   String
+  price         Float
+  originalPrice Float?
+  stock         Int      @default(0)
+  images        String[]
+  category      String
+  status        String   @default("DRAFT")
+  isFeatured    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // RELATIONS
+  reviews       Review[]
+  wishlistItems Wishlist[]
+  orderItems    OrderItem[] 
+  bundles       BundleProduct[] // Pointing to Join Table
+
+  @@index([title])
+  @@index([category])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==========================================
+// 5. COUPON TABLE
+// ==========================================
+model Coupon {
+  id           String       @id @default(uuid())
+  code         String       @unique
+  discountType DiscountType
+  value        Float
+  startDate    DateTime     @default(now())
+  endDate      DateTime
+  usageLimit   Int?
+  usedCount    Int          @default(0)
+  isActive     Boolean      @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ==========================================
+// 6. REVIEW TABLE
+// ==========================================
+model Review {
+  id      String @id @default(uuid())
+  rating  Int // 1 to 5 Stars
+  comment String
+
+  imageUrl String? // Optional field for photo reviews
+
+  // User Info (Clerk se lenge)
+  userId   String
+  userName String
+
+  // Product Link
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // Prevent Duplicate Reviews
+  @@unique([userId, productId])
+}
+
+// ==========================================
+// 7. WISHLIST TABLE ❤️
+// ==========================================
+model Wishlist {
+  id String @id @default(uuid())
+
+  userId String // Clerk User ID
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+// ==========================================
+// 8. STORE SETTINGS TABLE
+// ==========================================
+model StoreSettings {
+  id                    String   @id @default(cuid())
+  announcementText      String   @default("🎉 Special Offer: Get 20% OFF!")
+  couponCode            String?
+  showAnnouncement      Boolean  @default(true)
+  theme                 String   @default("default")
+  heroImage             String?
+  freeShippingThreshold Int      @default(499)
+  shippingCharge        Int      @default(49)
+  updatedAt             DateTime @updatedAt
+}
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  phone     String
+  token     String   // Isme OTP save hoga
+  expiresAt DateTime
+  attempts  Int      @default(0) // Rate limiting ke liye
+
+  @@unique([phone]) // Ek phone par ek hi active OTP rahega
+}
