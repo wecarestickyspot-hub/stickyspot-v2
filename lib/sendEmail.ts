@@ -1,22 +1,27 @@
 import { render } from "@react-email/render";
 import OrderEmail from "@/components/emails/OrderEmail";
 
-// 🛡️ Turbopack Fix: Using require to avoid 'Export not found' build errors
+// 🛡️ Safe Require for Turbopack/Next.js Build
 const SibApiV3Sdk = require("@getbrevo/brevo");
 
-// 🔴 API Key Check
-if (!process.env.BREVO_API_KEY) {
-  console.warn("⚠️ BREVO_API_KEY is missing. Emails will not be sent.");
-}
+/**
+ * 💡 Build Error Fix: 
+ * Global scope mein 'new' constructor call karne se build fail hoti hai.
+ * Isliye hum function ke andar instance banayenge.
+ */
+const getBrevoApi = () => {
+  if (!process.env.BREVO_API_KEY) {
+    console.error("❌ BREVO_API_KEY is missing!");
+    return null;
+  }
 
-// SDK Instance Setup
-const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-
-// API Key Setup
-apiInstance.setApiKey(
-  SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, 
-  process.env.BREVO_API_KEY || ""
-);
+  const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+  apiInstance.setApiKey(
+    SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey,
+    process.env.BREVO_API_KEY
+  );
+  return apiInstance;
+};
 
 export async function sendOrderConfirmation(
   email: string,
@@ -25,8 +30,10 @@ export async function sendOrderConfirmation(
   amount: number,
   items: any[]
 ) {
+  const apiInstance = getBrevoApi();
+  if (!apiInstance) return { success: false, error: "API not configured" };
+
   try {
-    // 1. React Email Component to HTML
     const emailHtml = await render(
       OrderEmail({
         customerName,
@@ -36,41 +43,20 @@ export async function sendOrderConfirmation(
       })
     );
 
-    // 2. Prepare Payload
     const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-    const displayOrderId = orderId.slice(-8).toUpperCase();
+    const displayId = orderId.slice(-8).toUpperCase();
 
-    sendSmtpEmail.subject = `Order Confirmed! #${displayOrderId}`;
+    sendSmtpEmail.subject = `Order Confirmed! #${displayId}`;
     sendSmtpEmail.htmlContent = emailHtml;
-    sendSmtpEmail.textContent = `Hi ${customerName}, your order #${displayOrderId} is confirmed! Amount: ₹${amount}. Team StickySpot.`;
-    
-    // 👇 Sender: Brevo Dashboard mein verified email hi hona chahiye
-    sendSmtpEmail.sender = { 
-      name: "StickySpot", 
-      email: "wecarestickyspot@gmail.com" 
-    }; 
-    
-    sendSmtpEmail.to = [{ email: email, name: customerName }];
+    sendSmtpEmail.sender = { name: "StickySpot", email: "wecarestickyspot@gmail.com" };
+    sendSmtpEmail.to = [{ email, name: customerName }];
 
-    sendSmtpEmail.replyTo = {
-      email: "support@stickyspot.in",
-      name: "StickySpot Support"
-    };
-
-    // 3. Dispatch
     const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    
-    console.log("✅ Email Sent Successfully:", response.body);
-    return { success: true, messageId: response.body };
+    console.log("✅ Email Sent:", response.body);
+    return { success: true, data: response.body };
 
   } catch (error: any) {
-    console.error("❌ Email Delivery Error:");
-    // Detailed error logging for debugging production
-    if (error.response && error.response.body) {
-      console.error(JSON.stringify(error.response.body, null, 2));
-    } else {
-      console.error(error);
-    }
+    console.error("❌ Email Error:", error?.response?.body || error);
     return { success: false, error };
   }
 }
