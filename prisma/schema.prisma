@@ -2,6 +2,7 @@
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -86,6 +87,7 @@ model Order {
   // Payment Details
   status    OrderStatus @default(PENDING)
   paymentId String?
+  paymentMethod String      @default("ONLINE")
   
 
 
