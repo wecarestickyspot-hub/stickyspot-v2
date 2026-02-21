@@ -3,6 +3,9 @@ import CreateCouponForm from "@/components/admin/CreateCouponForm";
 import CouponTable from "@/components/admin/CouponTable"; // 👇 Naya Client Component
 import { TicketPercent, CopyPlus } from "lucide-react";
 
+
+export const dynamic = "force-dynamic"; // 👈 YEH LINE ADD KARNI HAI
+
 export default async function CouponsPage() {
   // ⚡ Fast Server-Side Fetching (With Basic Pagination Idea: take 50)
   const coupons = await prisma.coupon.findMany({
