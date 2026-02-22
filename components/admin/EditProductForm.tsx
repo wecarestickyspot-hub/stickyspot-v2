@@ -64,7 +64,8 @@ export default function EditProductForm({ product }: { product: Product }) {
 
         if (result?.success) {
           toast.success(result.message || "Product Updated Successfully! 🎉");
-          router.push("/admin/products"); 
+          // 🚀 THE MAGIC FIX: Pushes user back to the exact page they came from (e.g., Page 2)
+          router.back(); 
         } else {
           // Displaying structured server errors if any
           toast.error(result?.message || "Failed to update product.");
