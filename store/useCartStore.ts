@@ -28,6 +28,7 @@ interface CartStore {
   isOpen: boolean; 
   setIsOpen: (isOpen: boolean) => void;
   
+  
   freeShippingThreshold: number; 
   shippingCharge: number;
   setShippingSettings: (threshold: number, charge: number) => void;
@@ -39,6 +40,7 @@ interface CartStore {
   removeDiscount: () => void;
   clearCart: () => void;
   getCartTotal: () => CartTotals;
+  
 }
 
 export const useCartStore = create<CartStore>()(

@@ -31,7 +31,6 @@ export default function WishlistButton({ productId, isWishlisted, isLoggedIn }: 
     e.stopPropagation();
 
     // 🛡️ FIX 1: Double-Click Race Condition Guard
-    // Blocks the user from spam-clicking while the server action is still resolving
     if (isPending) return;
 
     if (!isLoggedIn) {
@@ -71,18 +70,19 @@ export default function WishlistButton({ productId, isWishlisted, isLoggedIn }: 
       // 🛡️ FIX 4: Accessibility for Screen Readers
       aria-pressed={liked}
       aria-label={liked ? "Remove from Wishlist" : "Add to Wishlist"}
-      className={`p-3 rounded-full border transition-all duration-300 shadow-lg z-50 hover:scale-110 active:scale-95
+      // 🚀 UI FIX: Removed p-3. Added exact responsive width/height (w-8/10) and flex-center for perfect centering!
+      className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-full border transition-all duration-300 shadow-lg z-50 hover:scale-110 active:scale-95
         ${liked
           ? "bg-white text-rose-500 border-rose-200"
-          : "bg-black/40 border-white/10 text-white/70 hover:bg-white hover:text-rose-500"
+          : "bg-black/40 border-white/10 text-white/90 hover:bg-white hover:text-rose-500"
         }`}
     >
-      {/* 💎 FIX 5: Micro UX Animation (Pop effect on like) */}
+      {/* 💎 UI FIX: Made icon size responsive too (smaller on mobile, standard on PC) */}
       <Heart 
-        size={20} 
+        // Using Tailwind width/height instead of fixed pixel size for better responsiveness
+        className={`w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] ${liked && !isPending ? "animate-[pop_0.3s_ease]" : ""}`}
         fill={liked ? "currentColor" : "none"} 
-        // We apply the pop animation only when it's liked and not pending to prevent weird states
-        className={liked && !isPending ? "animate-[pop_0.3s_ease]" : ""} 
+        strokeWidth={2.5}
       />
     </button>
   );

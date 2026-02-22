@@ -11,25 +11,22 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import ProductCard from '@/components/shop/ProductCard';
 
-// 🛡️ FIX 4: ISR Revalidation (Product price/stock updates every 60 seconds)
 export const revalidate = 60;
 
-// 🛡️ FIX 1: Correct params typing (No Promise)
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const { slug } = params;
   const product = await prisma.product.findFirst({
-    where: { slug, status: "ACTIVE" } // 🛡️ FIX 2: Only active products
+    where: { slug, status: "ACTIVE" } 
   });
 
   if (!product) return { title: "Product Not Found" };
 
-  // 🛡️ FIX 6: Clean Description for SEO
-  const cleanDescription = product.description.replace(/<[^>]+>/g, '').slice(0, 160);
+  // 🛠️ FIX 1: Clean Description (Hiding the weird  character from Google SEO too)
+  const cleanDescription = product.description.replace(/<[^>]+>/g, '').replace(/|\uFFFD/g, ' ').slice(0, 160);
 
   return {
     title: `${product.title} | Premium Waterproof Sticker | StickySpot`,
     description: `${cleanDescription}... Shop premium vinyl stickers at StickySpot. Free shipping over ₹499.`,
-    // 🛡️ FIX 10: Canonical URL
     alternates: {
       canonical: `https://stickyspot.in/product/${slug}`,
     },
@@ -42,10 +39,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
-// 📦 Fetch Main Product with DB-Level Aggregation
 async function getProduct(slug: string) {
   const product = await prisma.product.findFirst({
-    where: { slug: slug, status: "ACTIVE" }, // 🛡️ FIX 2
+    where: { slug: slug, status: "ACTIVE" }, 
     include: {
       reviews: { orderBy: { createdAt: "desc" } }
     }
@@ -53,7 +49,6 @@ async function getProduct(slug: string) {
 
   if (!product) return null;
 
-  // 🛡️ FIX 3: DB-Level Review Aggregation (Scalable)
   const reviewStats = await prisma.review.aggregate({
     where: { productId: product.id },
     _avg: { rating: true },
@@ -63,7 +58,6 @@ async function getProduct(slug: string) {
   return { ...product, reviewStats };
 }
 
-// 🎁 Fetch Related Products
 async function getRelatedProducts(category: string, currentProductId: string) {
   return await prisma.product.findMany({
     where: {
@@ -72,7 +66,7 @@ async function getRelatedProducts(category: string, currentProductId: string) {
       status: "ACTIVE",
     },
     take: 4,
-    orderBy: { createdAt: "desc" }, // 🛡️ FIX 8: Meaningful sorting
+    orderBy: { createdAt: "desc" }, 
     select: {
       id: true,
       title: true,
@@ -107,7 +101,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const userData = user ? { id: user.id, firstName: user.firstName || "Customer", imageUrl: user.imageUrl } : null;
   const relatedProducts = await getRelatedProducts(productData.category, productData.id);
 
-  // 🛡️ FIX 7: Optimized Wishlist Query
   let userWishlistIds: string[] = [];
   if (user) {
     const productIdsToCheck = [productData.id, ...relatedProducts.map(p => p.id)];
@@ -128,7 +121,9 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const mainImage = productData.images?.[0] || "/placeholder.png";
   const isLowStock = productData.stock > 0 && productData.stock <= 10;
 
-  // 🛡️ SEO: Structured Data
+  // 🛠️ FIX 2: Cleaning the weird  characters from the description
+  const displayDescription = productData.description.replace(/|\uFFFD/g, " • ");
+
   const jsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
@@ -158,7 +153,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 lg:pt-40 relative z-10">
 
-        {/* 🛡️ FIX 9: SEO Breadcrumbs */}
         <nav aria-label="Breadcrumb" className="mb-8 hidden sm:flex">
           <ol className="flex items-center space-x-2 text-xs font-black uppercase tracking-widest text-slate-400">
             <li><Link href="/" className="hover:text-indigo-600 transition-colors flex items-center gap-1"><Home size={12} /> Home</Link></li>
@@ -174,6 +168,13 @@ export default async function ProductPage({ params }: { params: { slug: string }
           {/* Image Section */}
           <div className="lg:col-span-6 relative aspect-square rounded-[3.5rem] overflow-hidden border border-slate-100 bg-white shadow-xl shadow-slate-200/50 flex items-center justify-center p-12 group">
             <CldImage src={mainImage} alt={productData.title} fill className="object-contain p-12 group-hover:scale-110 transition-transform duration-700 ease-out drop-shadow-2xl" priority />
+            
+            {/* 🚀 PRO FIX 3: Moved Wishlist Button here for a premium UI look! */}
+            <div className="absolute top-6 right-6 sm:top-10 sm:right-10 z-20">
+              <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-slate-100 p-2 sm:p-3 hover:scale-110 transition-transform cursor-pointer">
+                <WishlistButton productId={productData.id} isWishlisted={isWishlisted} isLoggedIn={!!user} />
+              </div>
+            </div>
           </div>
 
           {/* Details Section */}
@@ -193,14 +194,14 @@ export default async function ProductPage({ params }: { params: { slug: string }
             <h1 className="text-5xl lg:text-7xl font-black mb-6 tracking-tighter leading-tight text-slate-900">{productData.title}</h1>
 
             <div className="flex items-baseline gap-4 mb-10 border-b border-slate-100 pb-8">
-              {/* 🛡️ FIX 5: Indian Currency Formatting */}
               <span className="text-5xl font-black text-slate-950 tracking-tighter">₹{Number(productData.price).toLocaleString("en-IN")}</span>
               {productData.originalPrice && (
                 <span className="text-2xl text-slate-300 font-bold line-through">₹{Number(productData.originalPrice).toLocaleString("en-IN")}</span>
               )}
             </div>
 
-            <p className="text-slate-600 text-lg font-medium leading-relaxed mb-8">{productData.description}</p>
+            {/* 🚀 Uses the cleaned description text here */}
+            <p className="text-slate-600 text-lg font-medium leading-relaxed mb-8">{displayDescription}</p>
 
             {/* Urgency & Stock */}
             <div className="mb-10">
@@ -212,15 +213,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
             {/* Actions */}
             <div className="flex flex-col gap-4 mb-12">
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  {/* Make sure AddToCartButton handles 0 stock properly internally too! */}
-                  <AddToCartButton product={productData} />
-                </div>
-                <div className="h-[64px] w-[64px] shrink-0 bg-white border border-slate-200 rounded-3xl flex items-center justify-center hover:bg-rose-50 transition-all">
-                  <WishlistButton productId={productData.id} isWishlisted={isWishlisted} isLoggedIn={!!user} />
-                </div>
-              </div>
+              <AddToCartButton product={productData} />
               <LiveTryOn imageSrc={mainImage} />
             </div>
 
@@ -245,7 +238,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
           <Reviews
             productId={productData.id}
             productSlug={productData.slug}
-            // 👇 Yahan humne Date ko String bana diya
             reviews={productData.reviews.map((r) => ({ ...r, createdAt: r.createdAt.toString() }))}
             currentUser={userData}
           />

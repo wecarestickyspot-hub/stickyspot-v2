@@ -94,6 +94,9 @@ export async function updateProduct(id: string, formData: FormData) {
       where: { id },
       data: {
         title: z.string().min(3).parse(formData.get("title")),
+        slug: slug, // 🚀 FIX 1: Slug update add kiya
+        category: formData.get("category") as string, // 🚀 FIX 2: Category save hogi ab
+        originalPrice: formData.get("originalPrice") ? Number(formData.get("originalPrice")) : null, // 🚀 FIX 3: MRP save hoga
         price: z.coerce.number().positive().parse(formData.get("price")),
         stock: z.coerce.number().int().nonnegative().parse(formData.get("stock")),
         description: (formData.get("description") as string).replace(/<[^>]*>?/gm, ""),
@@ -102,9 +105,15 @@ export async function updateProduct(id: string, formData: FormData) {
       },
     });
 
-    revalidatePath("/admin/products"); revalidatePath("/shop"); revalidatePath(`/product/${slug}`);
+    revalidatePath("/admin/products"); 
+    revalidatePath("/shop"); 
+    revalidatePath(`/product/${slug}`);
+    
     return { success: true, message: "Updated! ✨" };
-  } catch (error) { return { success: false, message: "Update failed" }; }
+  } catch (error: any) { 
+    console.error("❌ Update Product Error:", error);
+    return { success: false, message: "Update failed: " + error.message }; 
+  }
 }
 
 export async function deleteProduct(formData: FormData) {
@@ -178,19 +187,37 @@ export async function updateStoreSettings(formData: FormData) {
     const adminCheck = await checkAdmin("SUPER_ADMIN");
     if (!adminCheck.authorized) return { error: "Unauthorized" };
 
+    // 🛡️ FIX 1: Safely saari values nikaalo taaki Null error (crash) na aaye
+    const thresholdRaw = formData.get("threshold");
+    const chargeRaw = formData.get("charge");
+    const textRaw = formData.get("text");
+    const themeRaw = formData.get("theme"); // 🚀 Naya Theme field
+
+    // 🛡️ FIX 2: Sirf wahi data update karo jo form se aaya hai
+    const updateData: any = {};
+    if (thresholdRaw !== null) updateData.freeShippingThreshold = z.coerce.number().parse(thresholdRaw);
+    if (chargeRaw !== null) updateData.shippingCharge = z.coerce.number().parse(chargeRaw);
+    if (textRaw !== null) updateData.announcementText = String(textRaw).slice(0, 100);
+    if (themeRaw !== null) updateData.theme = String(themeRaw); // 👈 Theme save hogi ab!
+
     await prisma.storeSettings.upsert({
       where: { id: "global_settings" },
-      update: {
-        freeShippingThreshold: z.coerce.number().parse(formData.get("threshold")),
-        shippingCharge: z.coerce.number().parse(formData.get("charge")),
-        announcementText: (formData.get("text") as string).slice(0, 100)
-      },
-      create: { id: "global_settings", freeShippingThreshold: 499, shippingCharge: 49 }
+      update: updateData,
+      create: { 
+        id: "global_settings", 
+        freeShippingThreshold: 499, 
+        shippingCharge: 49,
+        theme: themeRaw ? String(themeRaw) : "Premium Light" // Default theme
+      }
     });
 
     revalidatePath("/", "layout");
     return { success: true };
-  } catch (error) { return { error: "Settings failed" }; }
+  } catch (error: any) { 
+    // 🛡️ FIX 3: Asli error console mein dikhega ab
+    console.error("❌ Settings Update Error:", error);
+    return { error: "Settings failed: " + error.message }; 
+  }
 }
 
 export async function setUserRole(userId: string, role: string) {

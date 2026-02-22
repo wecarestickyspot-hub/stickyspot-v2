@@ -15,10 +15,8 @@ type SearchParams = Promise<{
   page?: string;
 }>;
 
-// ⚡ SPEED: Revalidate har 1 ghante mein (Cache strategy)
 export const revalidate = 3600; 
 
-// 🛡️ FIX: Dynamic SEO Metadata
 export async function generateMetadata(props: { searchParams: SearchParams }): Promise<Metadata> {
   const { category, search, page } = await props.searchParams;
   const currentPage = parseInt(page || "1");
@@ -36,7 +34,7 @@ export async function generateMetadata(props: { searchParams: SearchParams }): P
       canonical: `https://stickyspot.in/shop${category && category !== 'All' ? `?category=${category}` : ''}`
     },
     robots: {
-      index: currentPage === 1, // 🚨 Do NOT index page 2, 3, etc.
+      index: currentPage === 1,
       follow: true
     }
   };
@@ -49,7 +47,6 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
   const limit = 24; 
   const skip = (currentPage - 1) * limit;
 
-  // 1. Build Query (Optimized)
   const where: any = { 
     status: "ACTIVE",
     stock: { gt: 0 } 
@@ -62,11 +59,10 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
   if (search) {
     where.OR = [
       { title: { contains: search, mode: "insensitive" } },
-      { category: { contains: search, mode: "insensitive" } }, // Changed tags to category for safety if tags missing
+      { category: { contains: search, mode: "insensitive" } },
     ];
   }
 
-  // 2. Sorting Logic
   const orderBy: any = {};
   switch (sort) {
     case "price_asc": orderBy.price = "asc"; break;
@@ -75,7 +71,6 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
     default: orderBy.createdAt = "desc";
   }
 
-  // 3. 🔥 THIN QUERY FETCH (With Fix)
   const [products, totalProducts, bundles, categoriesData] = await Promise.all([
     prisma.product.findMany({
       where,
@@ -96,13 +91,12 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
     }),
     prisma.product.count({ where }),
     
-    // 🚨 PRISMA FIX: Nested Include for Join Table
     (!search && (!category || category === "All") && currentPage === 1) ? prisma.bundle.findMany({
       where: { isActive: true },
       include: { 
         products: { 
-          include: { // 👈 Pehle Join Table mein ghusenge
-             product: { // 👈 Phir asli Product table mein
+          include: { 
+             product: { 
                select: { images: true } 
              }
           }
@@ -110,7 +104,6 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
       }
     }) : Promise.resolve([]),
 
-    // Optimized Category Fetching
     prisma.product.groupBy({
       by: ['category'],
       where: { status: "ACTIVE" },
@@ -120,7 +113,6 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
   const totalPages = Math.ceil(totalProducts / limit);
   const categoriesList = ["All", ...categoriesData.map((c) => c.category)];
 
-  // 4. User Auth & Wishlist
   const user = await currentUser();
   let userWishlistIds: string[] = [];
   const userData = user ? { id: user.id, firstName: user.firstName, imageUrl: user.imageUrl } : undefined;
@@ -137,7 +129,6 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
     userWishlistIds = wishlistItems.map(item => item.productId);
   }
 
-  // 5. Structured Data for Google
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -153,37 +144,40 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div className="relative z-20 pt-24 lg:pt-8">
+      {/* 🚀 FIX: Reduced top padding on mobile (pt-24 to pt-16) */}
+      <div className="relative z-20 pt-16 lg:pt-8">
         <ShopShippingBar />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+      {/* 🚀 FIX: Reduced top padding (py-12 to py-6 lg:py-12) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-12 relative z-10">
         
         {/* 🏷️ Header */}
-        <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
+        {/* 🚀 FIX: Made hero section way more compact on mobile */}
+        <div className="text-center mb-6 lg:mb-16 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <div className="hidden sm:inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
             <Zap size={12} className="fill-indigo-600" /> Premium Collection 2026
           </div>
-          <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-slate-900 mb-6">
+          <h1 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tighter text-slate-900 mb-2 sm:mb-6">
             The Sticker <span className="text-transparent bg-clip-text bg-gradient-to-tr from-indigo-600 to-purple-600">Shop</span>
           </h1>
-          <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
+          <p className="text-sm sm:text-lg md:text-xl text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
             {search 
               ? <>Found <span className="text-slate-900 font-black">{totalProducts}</span> results for "{search}"</>
-              : "Discover industrial-grade waterproof stickers designed to stick through every adventure."}
+              : "Discover waterproof stickers designed for every adventure."}
           </p>
         </div>
 
         {/* 🎁 BUNDLES SECTION */}
         {bundles.length > 0 && (
-          <section className="mb-24">
-            <div className="flex items-center gap-4 mb-10">
-                <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-slate-200">
-                    <Package size={24} strokeWidth={2.5} />
+          <section className="mb-12 lg:mb-24">
+            <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-10">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-slate-200">
+                    <Package size={20} className="sm:w-6 sm:h-6" strokeWidth={2.5} />
                 </div>
-                <h2 className="text-3xl font-black text-slate-900 tracking-tight italic">Exclusive Bundles</h2>
+                <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight italic">Exclusive Bundles</h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
               {bundles.map((bundle) => (
                 <BundleCard key={bundle.id} bundle={bundle as any} />
               ))}
@@ -192,9 +186,11 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
         )}
 
         {/* 🎛️ SHOP LAYOUT */}
-        <div className="flex flex-col lg:flex-row gap-10 items-start">
+        {/* 🚀 FIX: Changed to flex-col for mobile, placing filters naturally on top */}
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start">
           
           {/* Sidebar Filters */}
+          {/* 🚀 FIX: Make it full width on mobile, and sticky only on LG screens */}
           <aside className="w-full lg:w-64 shrink-0 lg:sticky lg:top-36 z-30">
             <ShopFilters categories={categoriesList} />
           </aside>
@@ -202,17 +198,17 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
           {/* Product Grid */}
           <div className="flex-1 w-full min-h-[60vh]">
             {products.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-32 text-center bg-white border border-slate-100 rounded-[3rem] shadow-sm animate-in zoom-in duration-500">
-                <PackageOpen size={64} className="text-slate-200 mb-6" />
-                <h2 className="text-3xl font-black text-slate-900">Sold Out or Not Found</h2>
-                <p className="text-slate-500 mt-2 max-w-xs mx-auto font-medium">Try adjusting your filters or search terms to find your next favorite sticker.</p>
-                <Link href="/shop" className="mt-8 px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-600 transition-all active:scale-95">
+              <div className="flex flex-col items-center justify-center py-20 lg:py-32 text-center bg-white border border-slate-100 rounded-3xl lg:rounded-[3rem] shadow-sm animate-in zoom-in duration-500">
+                <PackageOpen size={48} className="text-slate-200 mb-4 lg:mb-6 lg:w-16 lg:h-16" />
+                <h2 className="text-2xl lg:text-3xl font-black text-slate-900">Sold Out or Not Found</h2>
+                <p className="text-sm lg:text-base text-slate-500 mt-2 max-w-xs mx-auto font-medium">Try adjusting your filters or search terms.</p>
+                <Link href="/shop" className="mt-6 lg:mt-8 px-6 lg:px-8 py-3 lg:py-4 bg-slate-900 text-white rounded-xl lg:rounded-2xl font-black uppercase tracking-widest text-[10px] lg:text-xs hover:bg-indigo-600 transition-all active:scale-95">
                   View All Products
                 </Link>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
                   {products.map((product, idx) => (
                     <div 
                         key={product.id} 
@@ -237,23 +233,23 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
 
                 {/* 🎯 PAGINATION */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-3 mt-24">
+                  <div className="flex items-center justify-center gap-2 sm:gap-3 mt-16 sm:mt-24">
                     <Link
                       href={`/shop?${new URLSearchParams({ category: category || '', search: search || '', sort: sort || '', page: Math.max(1, currentPage - 1).toString() })}`}
-                      className={`h-14 px-6 rounded-2xl font-black flex items-center gap-2 border transition-all ${currentPage === 1 ? 'opacity-30 pointer-events-none border-slate-100 bg-slate-50 text-slate-300' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-500 hover:text-indigo-600'}`}
+                      className={`h-12 sm:h-14 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-black flex items-center gap-1 sm:gap-2 border transition-all ${currentPage === 1 ? 'opacity-30 pointer-events-none border-slate-100 bg-slate-50 text-slate-300' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-500 hover:text-indigo-600'}`}
                     >
-                      <ChevronLeft size={20} strokeWidth={3} /> <span className="hidden sm:inline">PREV</span>
+                      <ChevronLeft size={18} strokeWidth={3} /> <span className="hidden sm:inline">PREV</span>
                     </Link>
 
-                    <div className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-black flex items-center shadow-lg shadow-slate-200">
+                    <div className="h-12 sm:h-14 px-6 sm:px-8 rounded-xl sm:rounded-2xl bg-slate-900 text-white font-black flex items-center shadow-lg shadow-slate-200 text-sm sm:text-base">
                       {currentPage} <span className="mx-2 opacity-30">/</span> {totalPages}
                     </div>
 
                     <Link
                       href={`/shop?${new URLSearchParams({ category: category || '', search: search || '', sort: sort || '', page: Math.min(totalPages, currentPage + 1).toString() })}`}
-                      className={`h-14 px-6 rounded-2xl font-black flex items-center gap-2 border transition-all ${currentPage === totalPages ? 'opacity-30 pointer-events-none border-slate-100 bg-slate-50 text-slate-300' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-500 hover:text-indigo-600'}`}
+                      className={`h-12 sm:h-14 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-black flex items-center gap-1 sm:gap-2 border transition-all ${currentPage === totalPages ? 'opacity-30 pointer-events-none border-slate-100 bg-slate-50 text-slate-300' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-500 hover:text-indigo-600'}`}
                     >
-                      <span className="hidden sm:inline">NEXT</span> <ChevronRight size={20} strokeWidth={3} />
+                      <span className="hidden sm:inline">NEXT</span> <ChevronRight size={18} strokeWidth={3} />
                     </Link>
                   </div>
                 )}
@@ -263,18 +259,18 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
         </div>
 
         {/* 🏆 USP Features */}
-        <div className="mt-32 grid grid-cols-1 sm:grid-cols-3 gap-8 border-t border-slate-100 pt-20">
+        <div className="mt-20 sm:mt-32 grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 border-t border-slate-100 pt-16 sm:pt-20">
           {[
             { icon: <BadgeCheck className="text-emerald-500" />, title: "Industrial Grade", desc: "Long-lasting vinyl" },
             { icon: <Sparkles className="text-sky-500" />, title: "Ultra Vibrant", desc: "UV resistant inks" },
             { icon: <Layers className="text-purple-500" />, title: "Easy Peel", desc: "Zero residue left" }
           ].map((feature, i) => (
-            <div key={i} className="flex flex-col items-center text-center p-8 bg-white rounded-[2.5rem] border border-slate-50 shadow-sm group hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-500">
-              <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-indigo-50 transition-all">
+            <div key={i} className="flex flex-col items-center text-center p-6 sm:p-8 bg-white rounded-3xl sm:rounded-[2.5rem] border border-slate-50 shadow-sm group hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-500">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 group-hover:bg-indigo-50 transition-all">
                   {feature.icon}
               </div>
-              <p className="font-black text-slate-900 text-xl tracking-tight">{feature.title}</p>
-              <p className="text-sm text-slate-400 font-bold uppercase tracking-widest mt-2">{feature.desc}</p>
+              <p className="font-black text-slate-900 text-lg sm:text-xl tracking-tight">{feature.title}</p>
+              <p className="text-xs sm:text-sm text-slate-400 font-bold uppercase tracking-widest mt-2">{feature.desc}</p>
             </div>
           ))}
         </div>
