@@ -86,7 +86,7 @@ export async function updateProduct(id: string, formData: FormData) {
     const adminCheck = await checkAdmin("ADMIN");
     if (!adminCheck.authorized) return { success: false, message: "Unauthorized" };
 
-    const slug = z.string().regex(/^[a-zA-Z0-9-]+$/).parse(formData.get("slug"));
+    const slug = z.string().regex(/^[a-zA-Z0-9-_]+$/).parse(formData.get("slug"));
     const existing = await prisma.product.findFirst({ where: { slug, NOT: { id } } });
     if (existing) return { success: false, message: "Slug already exists" };
 
