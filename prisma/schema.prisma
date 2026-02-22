@@ -89,6 +89,10 @@ model Order {
   paymentId String?
   paymentMethod String      @default("ONLINE")
   
+  // 🚚 Shiprocket Details
+  shiprocketOrderId String?  
+  shipmentId        String?
+  awbCode           String?
 
 
   // 💰 FINANCIAL BREAKDOWN (Ye fields missing the!)
@@ -100,7 +104,6 @@ model Order {
   // Tracking (Admin panel se yahan AWB save hoga)
   trackingNumber String? // Shiprocket AWB
   trackingUrl    String?
-  shipmentId     String?
   courierName    String? // Delivery/Xpressbees etc.
 
   // Coupon Info

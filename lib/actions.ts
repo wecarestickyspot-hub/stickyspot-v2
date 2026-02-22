@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { redirect } from "next/navigation";
+import { pushOrderToShiprocket, generateAWB, requestPickup, generateLabel } from "@/lib/shiprocket";
 
 
 // ==========================================
@@ -85,7 +86,7 @@ export async function updateProduct(id: string, formData: FormData) {
     const adminCheck = await checkAdmin("ADMIN");
     if (!adminCheck.authorized) return { success: false, message: "Unauthorized" };
 
-    const slug = z.string().regex(/^[a-z0-9-]+$/).parse(formData.get("slug"));
+    const slug = z.string().regex(/^[a-zA-Z0-9-]+$/).parse(formData.get("slug"));
     const existing = await prisma.product.findFirst({ where: { slug, NOT: { id } } });
     if (existing) return { success: false, message: "Slug already exists" };
 
@@ -334,5 +335,70 @@ export async function deleteCoupon(id: string) {
   } catch (error) {
     console.error("Delete Coupon Error:", error);
     return { success: false, error: "Failed to delete coupon" };
+  }
+}
+
+// ==========================================
+// 🚚 ORDER STATUS & SHIPROCKET AUTOMATION
+// ==========================================
+
+// ==========================================
+// 🚚 ORDER STATUS & SHIPROCKET AUTOMATION
+// ==========================================
+
+export async function updateOrderStatus(orderId: string, newStatus: string) {
+  try {
+    // 1. Tumhara apna secure 'checkAdmin' function use kar rahe hain
+    const adminCheck = await checkAdmin("ADMIN");
+    if (!adminCheck.authorized) return { success: false, error: "Unauthorized" };
+
+    // 2. Database mein status update karo aur Order ki details nikaalo
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: { status: newStatus as any },
+      include: { items: true } // Items zaroori hain Shiprocket ko batane ke liye
+    });
+
+    // 3. 🔥 THE AUTOMATION: Agar status 'PROCESSING' kiya aur pehle Shiprocket par nahi bheja hai
+    if (newStatus === "PROCESSING" && !updatedOrder.shiprocketOrderId) {
+      try {
+        console.log("🚀 Pushing order to Shiprocket...");
+        const srData = await pushOrderToShiprocket(updatedOrder);
+        
+        console.log("🏷️ Generating AWB Label...");
+        const awbData = await generateAWB(srData.shipmentId.toString());
+
+        console.log("🏍️ Requesting Courier Pickup...");
+        await requestPickup(srData.shipmentId.toString());
+
+        console.log("🖨️ Fetching Label PDF Link...");
+        const labelUrl = await generateLabel(srData.shipmentId.toString());
+
+        // 4. Sab kuch DB mein ek sath save kar lo
+        await prisma.order.update({
+          where: { id: orderId },
+          data: {
+            shiprocketOrderId: srData.shiprocketOrderId.toString(),
+            shipmentId: srData.shipmentId.toString(),
+            awbCode: awbData.awbCode,   // 👈 Barcode save ho gaya!
+            trackingUrl: labelUrl,      // 👈 Label PDF link save ho gaya!
+          }
+        });
+        console.log(`✅ Success! Courier requested & Label ready: ${awbData.awbCode}`);
+      } catch (srError) {
+        console.error("❌ Failed Shiprocket Automation:", srError);
+        // Note: Hum yahan DB status update fail nahi kar rahe agar Shiprocket down ho
+      }
+    }
+
+    // 5. Admin Dashboard ko auto-refresh karo
+    revalidatePath("/admin");
+    revalidatePath(`/admin/orders/${orderId}`);
+    
+    return { success: true, order: updatedOrder };
+
+  } catch (error: any) {
+    console.error("Action Error:", error);
+    return { success: false, error: error.message };
   }
 }
