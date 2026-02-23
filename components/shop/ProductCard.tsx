@@ -29,7 +29,6 @@ export default function ProductCard({
   id, title, slug, price, originalPrice, rating = 4.8, reviewsCount = 124, image, category, currentUser, isWishlisted = false, stock, createdAt,
 }: ProductProps) {
   
-  // 🛒 Use 'setIsOpen' from your existing store
   const addItem = useCartStore((state) => state.addItem);
   const setIsOpen = useCartStore((state) => state.setIsOpen); 
   
@@ -48,7 +47,6 @@ export default function ProductCard({
     setIsAdded(true);
     toast.success(`${title} added to cart! 🛒`);
     
-    // 🚀 MAGIC: Use existing function to open drawer
     if (setIsOpen) {
       setIsOpen(true); 
     }
@@ -70,13 +68,17 @@ export default function ProductCard({
       <div className="relative aspect-square w-full bg-slate-50 overflow-hidden shrink-0">
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
         
-        {/* Floating Badges */}
-        <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-col items-start gap-1.5 sm:gap-2 pointer-events-none">
+        {/* 🚀 FIX 1: STRICTLY TOP-LEFT BADGE (NEW DROP) */}
+        <div className="absolute top-4 left-4 sm:top-5 sm:left-5 z-20 pointer-events-none">
             {isNew && (
                 <span className="bg-white/90 backdrop-blur-md border border-white text-indigo-600 text-[8px] sm:text-[10px] font-black px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-sm flex items-center gap-1 sm:gap-1.5 uppercase tracking-[0.1em]">
                     <Zap size={10} className="fill-indigo-600" /> <span className="hidden sm:inline">New Drop</span><span className="sm:hidden">New</span>
                 </span>
             )}
+        </div>
+
+        {/* 🚀 FIX 2: STRICTLY BOTTOM-LEFT BADGE (SELLING FAST) */}
+        <div className="absolute bottom-4 left-4 sm:bottom-5 sm:left-5 z-20 pointer-events-none">
             {isLowStock && (
                 <span className="bg-rose-50/90 backdrop-blur-md border border-rose-100 text-rose-600 text-[8px] sm:text-[10px] font-black px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-sm flex items-center gap-1 sm:gap-1.5 uppercase tracking-[0.1em] animate-pulse">
                     <Flame size={10} className="fill-rose-500" /> <span className="hidden sm:inline">Selling Fast</span><span className="sm:hidden">Fast</span>
@@ -84,11 +86,18 @@ export default function ProductCard({
             )}
         </div>
 
+        {/* Wishlist Button - TOP-RIGHT */}
+        <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-20 pointer-events-auto">
+            <div className="bg-white/80 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg shadow-sm border border-white p-1 hover:scale-110 transition-transform">
+                <WishlistButton productId={id} isWishlisted={isWishlisted} isLoggedIn={!!currentUser} />
+            </div>
+        </div>
+
         {/* 🔍 SEO & IMAGE */}
-        <Link href={`/product/${slug}`} title={`View details for ${title}`} className="absolute inset-0 p-6 sm:p-10 flex items-center justify-center">
+        <Link href={`/product/${slug}`} title={`View details for ${title}`} className="absolute inset-0 p-4 sm:p-6 flex items-center justify-center">
           <div className="relative w-full h-full">
             <CldImage
-              src={image}
+              src={image || "/placeholder.png"} // 🚀 FIX 3: Added Fallback Image to stop broken icons
               alt={`${title} sticker`} 
               fill
               loading="lazy"
@@ -98,13 +107,6 @@ export default function ProductCard({
             />
           </div>
         </Link>
-
-        {/* Wishlist Button */}
-        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 pointer-events-auto">
-            <div className="bg-white/80 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-sm border border-white p-1 hover:scale-110 transition-transform">
-                <WishlistButton productId={id} isWishlisted={isWishlisted} isLoggedIn={!!currentUser} />
-            </div>
-        </div>
       </div>
 
       {/* --- INFO SECTION --- */}

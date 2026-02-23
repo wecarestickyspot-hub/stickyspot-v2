@@ -5,7 +5,6 @@ import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
 import CldImage from '@/components/shared/CldImage';
 
-// 🚀 FIX 2: Advanced Full-Stack SEO (Canonical, OG, Twitter)
 export const metadata = {
   title: "Buy Premium Vinyl Stickers Online in India | StickySpot",
   description: "Premium waterproof vinyl stickers for laptops & creators. Built to outlast trends. Fast shipping across India. Shop StickySpot today.",
@@ -20,7 +19,7 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.jpg", // Replace with your actual OG image in public folder
+        url: "/og-image.jpg", 
         width: 1200,
         height: 630,
         alt: "StickySpot Premium Stickers",
@@ -35,9 +34,8 @@ export const metadata = {
   },
 };
 
-export const revalidate = 60; // SSR Cache
+export const revalidate = 60; 
 
-// 🧠 FIX 1: Proper Type Definition (No more "as any" hack)
 type MinimalProduct = {
   id: string;
   title: string;
@@ -51,10 +49,7 @@ type MinimalProduct = {
 
 export default async function HomePage() {
   
-  // Type Safety Maintained 
   let latestProducts: MinimalProduct[] = [];
-  
-  // ⚡ FIX 5: Fallback is now a local placeholder to prevent Cloudinary/Unsplash blocks
   let heroImage = "/placeholder.png"; 
   let userWishlistIds: string[] = [];
   let user;
@@ -82,7 +77,6 @@ export default async function HomePage() {
       currentUser()
     ]);
 
-    // ✨ No more code smells!
     latestProducts = productsData as MinimalProduct[]; 
     
     if (settingsData?.heroImage) heroImage = settingsData.heroImage;
@@ -115,12 +109,11 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen text-slate-900 selection:bg-indigo-200 overflow-x-hidden font-sans relative">
       
-      {/* 🎨 FIX 7: Subtle Luxury Animated Background Blobs */}
       <div className="absolute -top-32 -left-32 w-[500px] h-[500px] bg-indigo-300/30 rounded-full blur-3xl -z-10 animate-pulse" />
       <div className="absolute top-40 -right-32 w-[400px] h-[400px] bg-purple-300/20 rounded-full blur-3xl -z-10" />
 
       {/* --- HERO SECTION --- */}
-      <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-20 z-10 overflow-hidden">
+      <section className="relative pt-10 pb-16 lg:pt-12 lg:pb-20 z-10 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
 
@@ -140,7 +133,6 @@ export default async function HomePage() {
                 </span>
               </h1>
 
-              {/* 🎯 FIX 3: Stronger Hero Copy */}
               <p className="text-lg md:text-xl text-slate-600 max-w-lg mx-auto lg:mx-0 mb-8 font-medium leading-relaxed">
                 Premium waterproof stickers that survive real life — not just your desk. Built to outlast trends. Designed to express yours.
               </p>
@@ -154,7 +146,6 @@ export default async function HomePage() {
                 </Link>
               </div>
 
-              {/* 💰 FIX 4: Hero Trust Signals (Conversion Hack) */}
               <div className="mt-8 pt-6 border-t border-slate-200/60 flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-6 text-sm font-semibold text-slate-700">
                 <span className="flex items-center gap-1.5"><Star className="w-4 h-4 text-amber-500 fill-amber-500"/> 1,000+ Happy Customers</span>
                 <span className="flex items-center gap-1.5"><Truck className="w-4 h-4 text-indigo-500"/> Fast Shipping India 🇮🇳</span>
@@ -183,7 +174,6 @@ export default async function HomePage() {
       </section>
 
       {/* --- BUSINESS STRATEGY BANNER --- */}
-      {/* 📈 FIX 8: Added COD / Guarantee Bar for Indian E-commerce Trust */}
       <div className="bg-slate-900 py-4 relative z-10 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-center sm:justify-between items-center gap-4 text-white text-sm sm:text-base font-medium">
           <div className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-emerald-400" /> Cash on Delivery Available</div>
@@ -195,25 +185,30 @@ export default async function HomePage() {
       </div>
 
       {/* --- FEATURES SECTION --- */}
-      <section className="py-20 relative z-10">
+      {/* 🚀 PRO FIX: py-10 for tighter mobile spacing */}
+      <section className="py-10 lg:py-20 relative z-10">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 mb-3">Why Choose StickySpot?</h2>
-            <p className="text-slate-600 text-base max-w-xl mx-auto font-medium">We engineer durable art for your expensive gear.</p>
+          <div className="text-center mb-8 lg:mb-12">
+            <h2 className="text-2xl md:text-4xl font-black tracking-tight text-slate-900 mb-2 lg:mb-3">Why Choose StickySpot?</h2>
+            <p className="text-slate-600 text-sm lg:text-base max-w-xl mx-auto font-medium">We engineer durable art for your expensive gear.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+          <div className="flex overflow-x-auto snap-x snap-mandatory md:grid md:grid-cols-3 gap-4 lg:gap-8 pb-6 md:pb-0 scrollbar-hide -mx-6 px-6 md:mx-0 md:px-0">
             {[
-              { icon: <Zap className="text-indigo-600" size={28} />, title: "Pro Vinyl", desc: "Engineered for serious durability. Thick, scratch-resistant vinyl with a luxury matte finish that feels as premium as your gear.", bg: "bg-indigo-50/60" },
-              { icon: <ShieldCheck className="text-emerald-600" size={28} />, title: "Weatherproof", desc: "Rain, sun, dishwasher, rough use — bring it on. Our stickers stay vibrant and intact for years, not weeks.", bg: "bg-emerald-50/60" },
-              { icon: <Sparkles className="text-pink-600" size={28} />, title: "Clean Peel. Zero Residue.", desc: "Upgrade anytime without sticky mess. Our advanced adhesive removes cleanly — no damage, no frustration.", bg: "bg-pink-50/60" }
+              // 🚀 PRO FIX: Crisp, short copy for ultra-fast reading
+              { icon: <Zap className="text-indigo-600" size={24} />, title: "Pro Vinyl", desc: "Premium 6mil matte vinyl. Scratch-resistant.", bg: "bg-indigo-50/60" },
+              { icon: <ShieldCheck className="text-emerald-600" size={24} />, title: "Weatherproof", desc: "Rain, sun, or dishwasher. Stays vibrant for years.", bg: "bg-emerald-50/60" },
+              { icon: <Sparkles className="text-pink-600" size={24} />, title: "Clean Peel", desc: "Upgrade anytime without sticky mess. 100% residue-free.", bg: "bg-pink-50/60" }
             ].map((item, i) => (
-              <div key={i} className="relative p-8 lg:p-10 rounded-[2rem] bg-white/50 backdrop-blur-xl border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 hover:bg-white hover:-translate-y-1 transition-all duration-500 text-left group overflow-hidden">
-                <div className={`mb-6 p-4 ${item.bg} w-fit rounded-2xl group-hover:scale-110 transition-transform duration-500 border border-white shadow-sm`}>
+              // 🚀 PRO FIX: p-5 md:p-8 for 15-20% height reduction on mobile
+              <div key={i} className="snap-center shrink-0 w-[85%] sm:w-[300px] md:w-auto relative p-5 md:p-8 rounded-3xl lg:rounded-[2rem] bg-white/50 backdrop-blur-xl border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 hover:bg-white hover:-translate-y-1 transition-all duration-500 text-left group overflow-hidden">
+                {/* 🚀 PRO FIX: Reduced icon bottom margin mb-3 */}
+                <div className={`mb-3 lg:mb-5 p-3 lg:p-4 ${item.bg} w-fit rounded-xl lg:rounded-2xl group-hover:scale-110 transition-transform duration-500 border border-white shadow-sm`}>
                   {item.icon}
                 </div>
-                <h3 className="text-xl font-black mb-2 text-slate-900">{item.title}</h3>
-                <p className="text-slate-600 text-sm font-medium leading-relaxed">
+                <h3 className="text-lg lg:text-xl font-black mb-1 lg:mb-2 text-slate-900">{item.title}</h3>
+                {/* 🚀 PRO FIX: Ultra Smart Trick (line-clamp-2 + leading-snug) */}
+                <p className="text-slate-600 text-xs lg:text-sm font-medium leading-snug line-clamp-2 lg:line-clamp-none">
                   {item.desc}
                 </p>
               </div>
@@ -226,9 +221,8 @@ export default async function HomePage() {
       <section className="py-20 lg:py-24 max-w-7xl mx-auto px-6 relative z-10">
         <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-6 border-b border-slate-200 pb-8">
           <div>
-            {/* 💰 FIX 4: Social Proof before products */}
             <p className="text-indigo-600 font-bold text-sm sm:text-base mb-3 flex items-center gap-2">
-               Loved by Developers & Creators Across India 🇮🇳
+                Loved by Developers & Creators Across India 🇮🇳
             </p>
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900">Latest Drops</h2>
           </div>
@@ -242,7 +236,6 @@ export default async function HomePage() {
           {latestProducts.length > 0 ? (
             latestProducts.map((product) => (
               <div key={product.id} className="group h-full relative">
-                {/* 💰 FIX 4: Ensure ProductCard receives stock & createdAt for Scarcity/New Badges */}
                 <ProductCard
                   id={product.id}
                   title={product.title}

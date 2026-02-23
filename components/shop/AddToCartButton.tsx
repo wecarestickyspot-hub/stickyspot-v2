@@ -92,11 +92,9 @@ export default function AddToCartButton({ product }: { product: CartProduct }) {
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      {/* 🚀 FIX: 'flex-col sm:flex-row' ko sirf 'flex-row' kiya taaki mobile par bhi 1 hi line mein rahein */}
       <div className="flex flex-row items-center gap-3 w-full">
         
         {/* ➖ QUANTITY SELECTOR ➕ */}
-        {/* 🚀 FIX: Mobile ke liye width (w-[110px]) aur height (h-12) set ki taaki fit aa jaye */}
         <div className="flex items-center justify-between bg-white rounded-full px-1.5 py-1.5 border border-slate-200 shadow-sm w-[110px] sm:w-36 h-12 sm:h-14 shrink-0">
           <button 
             type="button"
@@ -162,13 +160,7 @@ export default function AddToCartButton({ product }: { product: CartProduct }) {
         </div>
       </div>
 
-      {/* 💰 CONVERSION UPGRADE: Scarcity & FOMO Marketing */}
-      {/* 🚀 FIX: Text alignment ko strictly left kiya taaki button ke theek neeche aaye */}
-      {product.stock <= 5 && product.stock > 0 && (
-        <p className="text-[11px] sm:text-xs text-rose-500 font-bold px-3 text-left animate-pulse mt-1">
-          Hurry! Only {product.stock} left in stock.
-        </p>
-      )}
+      {/* 🚀 FIX: Neeche wala "Hurry! Only X left" text HATA diya gaya hai! Ab duplicate nahi dikhega. */}
     </div>
   );
 }

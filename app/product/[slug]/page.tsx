@@ -2,7 +2,9 @@ import AddToCartButton from '@/components/shop/AddToCartButton';
 import Reviews from "@/components/product/Reviews";
 import WishlistButton from "@/components/shared/WishlistButton";
 import DeliveryChecker from '@/components/product/DeliveryChecker';
-import { Star, Truck, ShieldCheck, Zap, AlertCircle, Sparkles, History, Layers, ChevronRight, Home } from 'lucide-react';
+// 🚀 FIX: Import the new client component
+import ProductDescription from '@/components/product/ProductDescription'; 
+import { Star, Truck, ShieldCheck, Zap, AlertCircle, Sparkles, History, Layers, ChevronRight, Home, Tags } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { currentUser } from "@clerk/nextjs/server";
 import LiveTryOn from "@/components/product/LiveTryOn";
@@ -13,16 +15,20 @@ import ProductCard from '@/components/shop/ProductCard';
 
 export const revalidate = 60;
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const { slug } = params;
+type PageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  
   const product = await prisma.product.findFirst({
     where: { slug, status: "ACTIVE" } 
   });
 
   if (!product) return { title: "Product Not Found" };
 
-  // 🛠️ FIX 1: Clean Description (Hiding the weird  character from Google SEO too)
-  const cleanDescription = product.description.replace(/<[^>]+>/g, '').replace(/|\uFFFD/g, ' ').slice(0, 160);
+  const cleanDescription = product.description.replace(/<[^>]+>/g, '').replace(/\uFFFD/g, ' ').slice(0, 160);
 
   return {
     title: `${product.title} | Premium Waterproof Sticker | StickySpot`,
@@ -80,8 +86,9 @@ async function getRelatedProducts(category: string, currentProductId: string) {
   });
 }
 
-export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+export default async function ProductPage({ params }: PageProps) {
+  const { slug } = await params;
+
   const productData = await getProduct(slug);
   const user = await currentUser();
 
@@ -120,9 +127,15 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const averageRating = productData.reviewStats._avg.rating ? productData.reviewStats._avg.rating.toFixed(1) : "0";
   const mainImage = productData.images?.[0] || "/placeholder.png";
   const isLowStock = productData.stock > 0 && productData.stock <= 10;
+  
+  const isNew = productData.createdAt ? (new Date().getTime() - new Date(productData.createdAt).getTime()) < (14 * 24 * 60 * 60 * 1000) : false;
 
-  // 🛠️ FIX 2: Cleaning the weird  characters from the description
-  const displayDescription = productData.description.replace(/|\uFFFD/g, " • ");
+  const displayDescription = productData.description.replace(/\uFFFD/g, " • ");
+
+  const hasDiscount = productData.originalPrice && productData.originalPrice > productData.price;
+  const discountPercentage = hasDiscount 
+    ? Math.round(((Number(productData.originalPrice) - Number(productData.price)) / Number(productData.originalPrice)) * 100) 
+    : 0;
 
   const jsonLd = {
     "@context": "https://schema.org/",
@@ -151,10 +164,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 lg:pt-40 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 lg:pt-25 relative z-10">
 
-        <nav aria-label="Breadcrumb" className="mb-8 hidden sm:flex">
-          <ol className="flex items-center space-x-2 text-xs font-black uppercase tracking-widest text-slate-400">
+        <nav aria-label="Breadcrumb" className="mb-6 hidden sm:flex">
+          <ol className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
             <li><Link href="/" className="hover:text-indigo-600 transition-colors flex items-center gap-1"><Home size={12} /> Home</Link></li>
             <li><ChevronRight size={12} /></li>
             <li><Link href={`/shop?category=${productData.category}`} className="hover:text-indigo-600 transition-colors">{productData.category}</Link></li>
@@ -163,56 +176,84 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </ol>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
 
-          {/* Image Section */}
-          <div className="lg:col-span-6 relative aspect-square rounded-[3.5rem] overflow-hidden border border-slate-100 bg-white shadow-xl shadow-slate-200/50 flex items-center justify-center p-12 group">
-            <CldImage src={mainImage} alt={productData.title} fill className="object-contain p-12 group-hover:scale-110 transition-transform duration-700 ease-out drop-shadow-2xl" priority />
+          {/* 🖼️ IMAGE SECTION */}
+          <div className="lg:col-span-6 lg:sticky lg:top-32 relative aspect-square rounded-[2.5rem] lg:rounded-[3.5rem] overflow-hidden border border-slate-100 bg-white shadow-xl shadow-slate-200/50 flex items-center justify-center group">
             
-            {/* 🚀 PRO FIX 3: Moved Wishlist Button here for a premium UI look! */}
-            <div className="absolute top-6 right-6 sm:top-10 sm:right-10 z-20">
-              <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-slate-100 p-2 sm:p-3 hover:scale-110 transition-transform cursor-pointer">
+            <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+
+            <div className="relative w-full h-full flex items-center justify-center">
+                <CldImage 
+                  src={mainImage} 
+                  alt={productData.title} 
+                  fill 
+                  className="object-contain p-6 sm:p-10 group-hover:scale-105 transition-transform duration-700 ease-out drop-shadow-2xl" 
+                  priority 
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+            </div>
+            
+            <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+              <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-slate-100 p-1 hover:scale-110 transition-transform cursor-pointer">
                 <WishlistButton productId={productData.id} isWishlisted={isWishlisted} isLoggedIn={!!user} />
               </div>
             </div>
           </div>
 
-          {/* Details Section */}
-          <div className="lg:col-span-6 flex flex-col justify-center">
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-              <Link href={`/shop?category=${productData.category}`} className="bg-indigo-600 text-white text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-slate-900 transition-colors">
+          {/* 📝 DETAILS SECTION */}
+          <div className="lg:col-span-6 flex flex-col justify-center pt-2 lg:pt-10">
+            
+            {/* Categories & Badges */}
+            <div className="flex flex-wrap items-center gap-3 mb-5">
+              <Link href={`/shop?category=${productData.category}`} className="bg-indigo-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm hover:bg-slate-900 transition-colors">
                 {productData.category}
               </Link>
-              <a href="#reviews" className="flex items-center gap-2.5 bg-white border border-slate-100 px-4 py-2 rounded-full shadow-sm">
+              
+              {isNew && (
+                <span className="bg-slate-50 border border-slate-200 text-slate-900 text-[10px] font-black px-3 py-1.5 rounded-full flex items-center gap-1 uppercase tracking-widest">
+                   NEW DROP
+                </span>
+              )}
+
+              <a href="#reviews" className="flex items-center gap-2 bg-white border border-slate-100 px-3 py-1.5 rounded-full shadow-sm">
                 <div className="flex items-center gap-0.5">
-                  {[1, 2, 3, 4, 5].map((s) => <Star key={s} size={14} className={s <= Math.round(Number(averageRating)) ? "text-amber-400 fill-amber-400" : "text-slate-200 fill-slate-200"} />)}
+                  {[1, 2, 3, 4, 5].map((s) => <Star key={s} size={12} className={s <= Math.round(Number(averageRating)) ? "text-amber-400 fill-amber-400" : "text-slate-200 fill-slate-200"} />)}
                 </div>
-                <span className="text-slate-900 text-xs font-black tracking-widest uppercase">{totalReviews > 0 ? `${averageRating} / 5` : "New Drop"}</span>
+                <span className="text-slate-900 text-[10px] font-black tracking-widest">{totalReviews > 0 ? `${averageRating} / 5` : "0 Reviews"}</span>
               </a>
             </div>
 
-            <h1 className="text-5xl lg:text-7xl font-black mb-6 tracking-tighter leading-tight text-slate-900">{productData.title}</h1>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black mb-4 sm:mb-6 tracking-tight leading-[1.15] text-slate-900">{productData.title}</h1>
 
-            <div className="flex items-baseline gap-4 mb-10 border-b border-slate-100 pb-8">
-              <span className="text-5xl font-black text-slate-950 tracking-tighter">₹{Number(productData.price).toLocaleString("en-IN")}</span>
-              {productData.originalPrice && (
-                <span className="text-2xl text-slate-300 font-bold line-through">₹{Number(productData.originalPrice).toLocaleString("en-IN")}</span>
+            <div className="flex items-center gap-3 sm:gap-4 mb-8 border-b border-slate-100 pb-6 flex-wrap">
+              <span className="text-4xl sm:text-5xl font-black text-slate-950 tracking-tighter">₹{Number(productData.price).toLocaleString("en-IN")}</span>
+              
+              {hasDiscount && (
+                <div className="flex items-center gap-3">
+                  <span className="text-xl sm:text-2xl text-slate-400 font-bold line-through decoration-slate-300 decoration-2">
+                    ₹{Number(productData.originalPrice).toLocaleString("en-IN")}
+                  </span>
+                  <span className="bg-emerald-50 border border-emerald-200 text-emerald-600 text-[10px] sm:text-xs font-black px-3 py-1.5 rounded-xl flex items-center gap-1 uppercase tracking-widest shadow-sm">
+                    <Tags size={14} className="fill-emerald-600" /> {discountPercentage}% OFF
+                  </span>
+                </div>
               )}
             </div>
 
-            {/* 🚀 Uses the cleaned description text here */}
-            <p className="text-slate-600 text-lg font-medium leading-relaxed mb-8">{displayDescription}</p>
+            {/* 🚀 FIX: Replaced raw text with the beautiful collapsible component */}
+            <ProductDescription description={displayDescription} />
 
             {/* Urgency & Stock */}
-            <div className="mb-10">
+            <div className="mb-8">
               {productData.stock > 0 ? (
-                isLowStock ? <div className="inline-flex items-center gap-2 bg-rose-50 border border-rose-100 text-rose-600 px-5 py-3 rounded-2xl text-sm font-black uppercase tracking-widest animate-pulse"><Zap size={18} className="fill-rose-600" /> Only {productData.stock} left!</div>
-                  : <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-600 px-5 py-3 rounded-2xl text-sm font-black uppercase tracking-widest"><Sparkles size={18} className="fill-emerald-600" /> Waterproof & Premium</div>
-              ) : <div className="inline-flex items-center gap-2 bg-slate-100 border border-slate-200 text-slate-500 px-5 py-3 rounded-2xl text-sm font-black uppercase tracking-widest">Out of Stock</div>}
+                isLowStock ? <div className="inline-flex items-center gap-2 bg-rose-50 border border-rose-100 text-rose-600 px-4 py-2 sm:px-5 sm:py-3 rounded-xl text-xs sm:text-sm font-black uppercase tracking-widest animate-pulse"><Zap size={16} className="fill-rose-600" /> Only {productData.stock} left!</div>
+                  : <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-600 px-4 py-2 sm:px-5 sm:py-3 rounded-xl text-xs sm:text-sm font-black uppercase tracking-widest"><Sparkles size={16} className="fill-emerald-600" /> Waterproof & Premium</div>
+              ) : <div className="inline-flex items-center gap-2 bg-slate-100 border border-slate-200 text-slate-500 px-4 py-2 sm:px-5 sm:py-3 rounded-xl text-xs sm:text-sm font-black uppercase tracking-widest">Out of Stock</div>}
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col gap-4 mb-12">
+            <div className="flex flex-col gap-4 mb-10">
               <AddToCartButton product={productData} />
               <LiveTryOn imageSrc={mainImage} />
             </div>
@@ -220,21 +261,21 @@ export default async function ProductPage({ params }: { params: { slug: string }
             <DeliveryChecker />
 
             {/* Trust Seals */}
-            <div className="grid grid-cols-2 gap-4 mt-10">
-              <div className="flex items-center gap-4 p-5 bg-white rounded-[2rem] border border-slate-50 shadow-sm">
-                <Layers className="text-indigo-600" size={24} />
-                <div><p className="font-black text-slate-900 text-sm">Weatherproof</p><p className="text-[10px] text-slate-400 font-bold uppercase">UV & Rain safe</p></div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-8">
+              <div className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 bg-white rounded-2xl sm:rounded-[2rem] border border-slate-50 shadow-sm">
+                <Layers className="text-indigo-600 shrink-0" size={24} />
+                <div><p className="font-black text-slate-900 text-xs sm:text-sm">Weatherproof</p><p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-widest">UV & Rain safe</p></div>
               </div>
-              <div className="flex items-center gap-4 p-5 bg-white rounded-[2rem] border border-slate-50 shadow-sm">
-                <History className="text-indigo-600" size={24} />
-                <div><p className="font-black text-slate-900 text-sm">No Residue</p><p className="text-[10px] text-slate-400 font-bold uppercase">Safe removal</p></div>
+              <div className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 bg-white rounded-2xl sm:rounded-[2rem] border border-slate-50 shadow-sm">
+                <History className="text-indigo-600 shrink-0" size={24} />
+                <div><p className="font-black text-slate-900 text-xs sm:text-sm">No Residue</p><p className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-widest">Safe removal</p></div>
               </div>
             </div>
           </div>
         </div>
 
         {/* ⭐ Reviews Section */}
-        <div id="reviews" className="mt-32 pt-20 border-t border-slate-200/60">
+        <div id="reviews" className="mt-24 sm:mt-32 pt-16 sm:pt-20 border-t border-slate-200/60">
           <Reviews
             productId={productData.id}
             productSlug={productData.slug}
@@ -245,23 +286,23 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
         {/* 📦 You May Also Like */}
         {relatedProducts.length > 0 && (
-          <div className="mt-20 pt-20 border-t border-slate-200/60">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+          <div className="mt-16 sm:mt-20 pt-16 sm:pt-20 border-t border-slate-200/60">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
               <div>
-                <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                  <Sparkles className="text-indigo-600" size={28} /> You May Also Like
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2 sm:gap-3">
+                  <Sparkles className="text-indigo-600" size={24} /> You May Also Like
                 </h2>
-                <p className="text-slate-500 font-medium mt-2">Explore more premium stickers in the <span className="text-indigo-600 font-bold">{productData.category}</span> collection.</p>
+                <p className="text-slate-500 font-medium mt-1 sm:mt-2 text-sm sm:text-base">Explore more premium stickers in the <span className="text-indigo-600 font-bold">{productData.category}</span> collection.</p>
               </div>
               <Link
                 href={`/shop?category=${productData.category}`}
-                className="text-xs font-black text-slate-900 uppercase tracking-widest hover:text-indigo-600 bg-white border border-slate-200 px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all self-start sm:self-auto"
+                className="text-[10px] sm:text-xs font-black text-slate-900 uppercase tracking-widest hover:text-indigo-600 bg-white border border-slate-200 px-5 py-2.5 sm:px-6 sm:py-3 rounded-full shadow-sm hover:shadow-md transition-all self-start sm:self-auto"
               >
                 View All
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
               {relatedProducts.map((p) => (
                 <div key={p.id} className="h-full">
                   <ProductCard

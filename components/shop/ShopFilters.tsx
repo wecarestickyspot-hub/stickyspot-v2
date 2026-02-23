@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Filter, ArrowDownUp, Tag, XCircle } from "lucide-react";
+import { Filter, Tag, XCircle, ArrowDownUp } from "lucide-react";
 
 interface ShopFiltersProps {
   categories: string[];
@@ -38,34 +38,62 @@ export default function ShopFilters({ categories }: ShopFiltersProps) {
   };
 
   return (
-    // 🚀 FIX: Removed the giant vertical box on mobile. Kept premium box for desktop.
-    <div className="w-full lg:bg-white/60 lg:backdrop-blur-xl lg:border lg:border-white/80 lg:rounded-[2rem] lg:p-6 lg:shadow-sm">
+    <div className="w-full relative z-40 bg-white/90 backdrop-blur-xl border border-slate-200 md:border-white/80 rounded-3xl md:rounded-[2rem] p-4 md:p-6 shadow-sm mb-6 md:mb-0 transition-all duration-300">
       
-      {/* Header & Clear Filters Button (Hidden on Mobile) */}
-      <div className="hidden lg:flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-        <div className="flex items-center gap-2">
-          <Filter size={20} className="text-indigo-600" />
-          <h2 className="text-lg font-black text-slate-900">Filters</h2>
+      {/* --- 📱 MOBILE & PC HEADER --- */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100">
+        
+        {/* Title & Active Badge */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-slate-900 font-black text-sm md:text-lg">
+            <Filter size={18} className="text-indigo-600" />
+            <span>Filters</span>
+          </div>
+          {hasActiveFilters && (
+            <div className="hidden sm:flex text-[10px] font-bold text-indigo-600 items-center gap-1.5 bg-indigo-50 px-2 py-1 rounded-md animate-in fade-in zoom-in duration-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" /> Active
+            </div>
+          )}
         </div>
-        {hasActiveFilters && (
-          <button 
-            onClick={clearFilters}
-            aria-label="Clear all filters"
-            className="flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg transition-colors"
-          >
-            <XCircle size={14} /> Clear
-          </button>
-        )}
+
+        {/* 🚀 MOBILE ONLY: Sort Dropdown & Clear Button */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          
+          {/* 📱 DROPDOWN - Strictly hidden on medium/large screens (md:hidden) */}
+          <div className="flex md:hidden items-center gap-1.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sort:</span>
+            <select
+              value={currentSort}
+              onChange={(e) => updateFilter("sort", e.target.value)}
+              className="bg-slate-50 border border-slate-200 text-slate-800 text-[11px] font-bold rounded-lg px-2 py-1.5 focus:outline-none focus:border-indigo-500 shadow-sm cursor-pointer"
+            >
+              <option value="newest">Newest First</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+            </select>
+          </div>
+
+          {/* Clear Button */}
+          {hasActiveFilters && (
+            <button 
+              onClick={clearFilters}
+              aria-label="Clear all filters"
+              className="flex items-center gap-1 text-[10px] sm:text-xs font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50 px-2 py-1.5 rounded-lg transition-colors"
+            >
+              <XCircle size={14} className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Clear</span>
+            </button>
+          )}
+
+        </div>
       </div>
 
-      {/* 🏷️ Categories Options */}
-      <div className="mb-4 lg:mb-8">
-        <h3 className="hidden lg:flex text-xs font-black text-slate-400 uppercase tracking-widest mb-4 items-center gap-1.5">
+      {/* --- 🏷️ CATEGORIES OPTIONS --- */}
+      <div>
+        <h3 className="hidden md:flex text-xs font-black text-slate-400 uppercase tracking-widest mb-4 items-center gap-1.5">
           <Tag size={14} /> Categories
         </h3>
         
-        {/* 🚀 FIX: Horizontal Scrollable Pills for Mobile, Vertical list for Desktop */}
-        <div className="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 scrollbar-hide -mx-4 px-4 lg:mx-0 lg:px-0" role="group" aria-label="Filter by category">
+        <div className="flex flex-row md:flex-col gap-2.5 overflow-x-auto md:overflow-visible pb-2 md:pb-0 scrollbar-hide -mx-2 px-2 md:mx-0 md:px-0 scroll-smooth snap-x snap-mandatory" role="group" aria-label="Filter by category">
           {allCategories.map((cat) => {
             const isActive = safeCategory === cat;
             return (
@@ -73,11 +101,10 @@ export default function ShopFilters({ categories }: ShopFiltersProps) {
                 key={cat}
                 onClick={() => updateFilter("category", cat)}
                 aria-pressed={isActive}
-                // 🚀 FIX: Pill design for mobile (rounded-full, horizontal)
-                className={`whitespace-nowrap flex-shrink-0 text-center lg:text-left px-5 lg:px-4 py-2.5 rounded-full lg:rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                  isActive 
-                    ? "bg-slate-900 lg:bg-indigo-50 text-white lg:text-indigo-700 lg:border lg:border-indigo-200 shadow-md lg:shadow-sm" 
-                    : "bg-white lg:bg-transparent text-slate-600 border border-slate-200 lg:border-transparent hover:bg-slate-50 hover:border-slate-300"
+                className={`snap-start relative z-50 whitespace-nowrap flex-shrink-0 text-center md:text-left px-4 py-2 rounded-full md:rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer select-none border 
+                  ${isActive 
+                    ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-500/30" 
+                    : "bg-white md:bg-transparent text-slate-600 border-slate-200 md:border-transparent hover:bg-slate-50 hover:border-slate-300 shadow-sm md:shadow-none"
                 }`}
               >
                 {cat}
@@ -87,8 +114,9 @@ export default function ShopFilters({ categories }: ShopFiltersProps) {
         </div>
       </div>
 
-      {/* ⬇️ Sort Options */}
-      <div className="hidden lg:block">
+      {/* --- 💻 DESKTOP ONLY: SORT BUTTONS --- */}
+      {/* Strictly hidden on mobile, visible only on medium/large screens (hidden md:block) */}
+      <div className="hidden md:block mt-8">
         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
           <ArrowDownUp size={14} /> Sort By
         </h3>
@@ -104,7 +132,7 @@ export default function ShopFilters({ categories }: ShopFiltersProps) {
                 key={option.value}
                 onClick={() => updateFilter("sort", option.value)}
                 aria-pressed={isActive} 
-                className={`text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                className={`text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                   isActive 
                     ? "bg-slate-900 text-white shadow-md shadow-slate-900/10" 
                     : "bg-transparent text-slate-600 border border-transparent hover:bg-slate-50 hover:border-slate-200"
