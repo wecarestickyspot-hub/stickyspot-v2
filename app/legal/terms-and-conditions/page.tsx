@@ -161,7 +161,7 @@ export default function TermsAndConditionsPage() {
                   <div>
                     <span className="block text-sm font-medium text-gray-500">Email Address</span>
                     {/* ⚠️ 6️⃣ Consistent Email */}
-                    <a href="mailto:wecarest@stickyspot.com" className="text-indigo-600 hover:underline font-semibold">wecarest@stickyspot.com</a>
+                    <a href="mailto:wecarestickyspot@gmail.com" className="text-indigo-600 hover:underline font-semibold">wecarestickyspot@gmail.com</a>
                   </div>
                 </li>
                 <li className="flex items-center gap-3">

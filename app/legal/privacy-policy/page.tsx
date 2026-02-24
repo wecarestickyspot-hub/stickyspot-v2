@@ -162,7 +162,7 @@ export default function PrivacyPolicyPage() {
                 </div>
               </div>
               {/* ✅ 5️⃣ Email Consistency Fixed */}
-              <p className="mt-4">To exercise any of these rights, please contact us at <a href="mailto:wecarest@stickyspot.com" className="text-indigo-600 hover:underline">wecarest@stickyspot.com</a></p>
+              <p className="mt-4">To exercise any of these rights, please contact us at <a href="mailto:wecarestickyspot@gmail.com" className="text-indigo-600 hover:underline">wecarestickyspot@gmail.com</a></p>
             </section>
 
             <section>
@@ -193,7 +193,7 @@ export default function PrivacyPolicyPage() {
                   <span className="text-xl">📧</span> 
                   <span className="font-medium text-gray-900">Email:</span> 
                   {/* ✅ 5️⃣ Email Consistency Fixed */}
-                  <a href="mailto:wecarest@stickyspot.com" className="text-indigo-600 hover:underline font-semibold">wecarest@stickyspot.com</a>
+                  <a href="mailto:wecarestickyspot@gmail.com" className="text-indigo-600 hover:underline font-semibold">wecarestickyspot@gmail.com</a>
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="text-xl">📱</span> 

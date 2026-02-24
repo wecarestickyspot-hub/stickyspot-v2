@@ -31,7 +31,7 @@ export default function Footer() {
               "@type": "ContactPoint",
               telephone: "+91-99828-20706",
               contactType: "customer service",
-              email: "wecarest@stickyspot.com"
+              email: "wecarestickyspot@gmail.com"
             },
             sameAs: [
               "https://instagram.com/stickyspot",
@@ -114,7 +114,7 @@ export default function Footer() {
                 <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0 border border-slate-100 group-hover:bg-indigo-50 transition-colors">
                     <Mail aria-hidden="true" size={16} className="text-indigo-500" />
                 </div>
-                <a href="mailto:wecarest@stickyspot.com" className="hover:text-indigo-600 mt-1 transition-colors">wecarest@stickyspot.com</a>
+                <a href="mailto:wecarestickyspot@gmail.com" className="hover:text-indigo-600 mt-1 transition-colors">wecarestickyspot@gmail.com</a>
               </li>
               <li className="flex items-center gap-3 group">
                  <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0 border border-slate-100 group-hover:bg-indigo-50 transition-colors">

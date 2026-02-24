@@ -118,7 +118,7 @@ export default function ShippingPolicyPage() {
               </div>
               <ul className="list-disc list-inside ml-4 space-y-2">
                 <li>StickySpot ensures that all stickers are packed securely to prevent bending or damage during transit.</li>
-                <li>If you receive a damaged product, please contact us immediately at <span className="font-semibold text-indigo-600">wecarest@stickyspot.com</span> with photos of the damaged packaging and product.</li>
+                <li>If you receive a damaged product, please contact us immediately at <span className="font-semibold text-indigo-600">wecarestickyspot@gmail.com</span> with photos of the damaged packaging and product.</li>
                 <li>If your tracking shows "Delivered" but you haven't received the package, please check with your neighbors or building security before contacting us.</li>
               </ul>
             </section>
@@ -131,7 +131,7 @@ export default function ShippingPolicyPage() {
                   <Mail aria-hidden="true" className="w-6 h-6 text-indigo-600" />
                   <div>
                     <span className="block text-sm font-medium text-gray-500">Email Address</span>
-                    <a href="mailto:wecarest@stickyspot.com" className="text-indigo-600 hover:underline font-semibold">wecarest@stickyspot.com</a>
+                    <a href="mailto:wecarestickyspot@gmail.com" className="text-indigo-600 hover:underline font-semibold">wecarestickyspot@gmail.com</a>
                   </div>
                 </li>
                 <li className="flex items-center gap-3">

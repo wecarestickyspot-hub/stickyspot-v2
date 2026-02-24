@@ -74,7 +74,7 @@ export default function ContactPage() {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900">Email</h3>
                 <p className="mt-2 text-gray-600 text-sm">
-                  wecarest@stickyspot.com
+                  wecarestickyspot@gmail.com
                 </p>
                 <p className="mt-1 text-gray-400 text-xs">
                   We reply within 24 hours
