@@ -6,7 +6,6 @@ import toast from "react-hot-toast";
 import { useTransition } from "react";
 
 export default function AnnouncementManager({ settings }: { settings: any }) {
-  // 🛡️ FIX 5: Pending state for Double Submit Protection
   const [isPending, startTransition] = useTransition();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -15,7 +14,6 @@ export default function AnnouncementManager({ settings }: { settings: any }) {
     
     startTransition(async () => {
       try {
-        // 🛡️ FIX 6: Proper Client Error Handling
         const result = await updateStoreSettings(formData);
         
         if (result?.error) {
@@ -46,7 +44,6 @@ export default function AnnouncementManager({ settings }: { settings: any }) {
             name="text" 
             defaultValue={settings?.announcementText}
             placeholder="e.g. 🎉 Grand Opening Sale: 30% OFF!" 
-            // 🛡️ Client side lengths limit, actual validation must be on server
             maxLength={100} 
             className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold text-slate-900 focus:outline-none focus:border-indigo-400 transition-all"
             required
@@ -60,7 +57,6 @@ export default function AnnouncementManager({ settings }: { settings: any }) {
               name="code" 
               defaultValue={settings?.couponCode}
               placeholder="e.g. SAVE30" 
-              // 🛡️ Added pattern matching for UX, real check is on Server
               pattern="^[a-zA-Z0-9]{3,20}$"
               title="3 to 20 alphanumeric characters, no spaces"
               className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-black uppercase text-indigo-600 focus:outline-none focus:border-indigo-400 transition-all"
@@ -69,8 +65,9 @@ export default function AnnouncementManager({ settings }: { settings: any }) {
 
           <div>
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Status</label>
+            {/* 🚀 FIX: Changed name from "active" to "showAnnouncement" so Server Action can catch it */}
             <select 
-              name="active" 
+              name="showAnnouncement" 
               defaultValue={settings?.showAnnouncement?.toString()}
               className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 font-bold text-slate-900 focus:outline-none focus:border-indigo-400 transition-all appearance-none cursor-pointer"
             >

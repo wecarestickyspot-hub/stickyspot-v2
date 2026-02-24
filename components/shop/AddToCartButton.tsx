@@ -63,6 +63,7 @@ export default function AddToCartButton({ product }: { product: CartProduct }) {
 
     setIsProcessing(true); 
     
+    // 🚀 THE ULTIMATE FIX: Passed the actual product stock instead of 0
     addItem({
       id: product.id,
       title: product.title,
@@ -71,7 +72,7 @@ export default function AddToCartButton({ product }: { product: CartProduct }) {
       slug: product.slug,
       quantity: quantity,
       category: product.category,
-      stock: 0
+      stock: product.stock // <--- Yahan 0 tha, isko fix kar diya hai!
     });
     
     setIsAdded(true);
@@ -159,8 +160,6 @@ export default function AddToCartButton({ product }: { product: CartProduct }) {
           </button>
         </div>
       </div>
-
-      {/* 🚀 FIX: Neeche wala "Hurry! Only X left" text HATA diya gaya hai! Ab duplicate nahi dikhega. */}
     </div>
   );
 }

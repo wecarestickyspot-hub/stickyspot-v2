@@ -147,7 +147,7 @@ export default function CustomPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-20 selection:bg-indigo-200 font-sans">
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 lg:pt-40 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 lg:pt-28 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
         
         {/* LEFT: Upload Area */}
         <div className="space-y-8 animate-in fade-in slide-in-from-left duration-700">

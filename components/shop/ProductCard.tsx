@@ -22,7 +22,7 @@ interface ProductProps {
   currentUser?: any;
   isWishlisted?: boolean;
   stock?: number;
-  createdAt?: Date;
+  createdAt?: Date | string;
 }
 
 export default function ProductCard({

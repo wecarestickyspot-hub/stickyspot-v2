@@ -2,17 +2,11 @@ import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingCart, 
-  LogOut, 
-  Users, 
-  TicketPercent, 
-  Boxes, 
-  Settings,
-  ShieldCheck
+  LayoutDashboard, Package, ShoppingCart, LogOut, 
+  Users, TicketPercent, Boxes, Settings, ShieldCheck
 } from "lucide-react";
 import AdminSidebarItem from "@/components/admin/AdminSidebarItem";
+import AdminMobileMenu from "@/components/admin/AdminMobileMenu"; // 🚀 FIX: Import naya menu
 
 export default async function AdminLayout({
   children,
@@ -20,29 +14,23 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const user = await currentUser();
-
-  // 1. Safe Role Extraction with Fallback (Enterprise Upgrade 🚀)
   const role = (user?.publicMetadata?.role ?? "USER") as string;
-  
-  // ✅ FIX 1: Fetching Admin Email from Environment Variables
   const adminEmail = process.env.ADMIN_EMAIL;
-
-  // 🛡️ 2. Security Check (Optimized Logic)
   const isAuthorized = role === "SUPER_ADMIN" || role === "ADMIN" || role === "SUPPORT";
   const isOwner = user?.emailAddresses?.some(e => e.emailAddress === adminEmail);
 
-  // Kick out unauthorized users instantly before rendering anything
   if (!user || (!isAuthorized && !isOwner)) {
     redirect("/");
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex font-sans overflow-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col md:flex-row font-sans overflow-hidden">
+      
+      {/* 🚀 FIX: Ye naya component sirf mobile par dikhega */}
+      <AdminMobileMenu role={role} isOwner={!!isOwner} />
 
-      {/* 📱 Sidebar (Premium Light Theme) */}
+      {/* 💻 Desktop Sidebar (Hidden on mobile, flex on md and up) */}
       <aside className="w-72 bg-white border-r border-slate-200 hidden md:flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20">
-        
-        {/* Logo Area */}
         <div className="h-24 flex items-center px-8 border-b border-slate-100">
           <Link href="/admin" className="text-2xl font-black tracking-tight flex items-center gap-2 group">
             <div className="bg-indigo-600 p-1.5 rounded-xl group-hover:rotate-12 transition-transform duration-300 shadow-lg shadow-indigo-100">
@@ -53,12 +41,9 @@ export default async function AdminLayout({
           </Link>
         </div>
 
-        {/* Navigation Links */}
         <nav className="flex-1 p-5 space-y-1.5 overflow-y-auto custom-scrollbar">
-          
           <AdminSidebarItem href="/admin" icon={<LayoutDashboard size={20} />} label="Dashboard" />
           
-          {/* 🟡 Route-level UI Filtering based on roles */}
           {role !== "SUPPORT" && (
             <>
               <AdminSidebarItem href="/admin/products" icon={<Package size={20} />} label="Products" />
@@ -72,7 +57,6 @@ export default async function AdminLayout({
              <AdminSidebarItem href="/admin/coupons" icon={<TicketPercent size={20} />} label="Coupons" />
           )}
 
-          {/* Master Controls Section */}
           {(role === "SUPER_ADMIN" || isOwner) && (
             <div className="mt-8 animate-in fade-in slide-in-from-left duration-700">
               <div className="pb-3 px-4">
@@ -84,7 +68,6 @@ export default async function AdminLayout({
           )}
         </nav>
 
-        {/* Footer Area */}
         <div className="p-5 border-t border-slate-100 bg-slate-50/50">
           <Link href="/" className="flex items-center gap-3.5 px-4 py-3.5 text-slate-500 font-bold hover:bg-rose-50 hover:text-rose-600 rounded-2xl transition-all group">
             <LogOut size={20} strokeWidth={2.5} className="group-hover:-translate-x-1 transition-transform" /> Exit to Store
@@ -93,14 +76,12 @@ export default async function AdminLayout({
       </aside>
 
       {/* 🖼️ Main Content Area */}
-      <main className="flex-1 overflow-y-auto relative h-screen custom-scrollbar">
-        {/* 🔮 Global Glass Background Orbs (Depth Layer) */}
+      <main className="flex-1 overflow-y-auto relative h-[calc(100vh-73px)] md:h-screen custom-scrollbar">
         <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
           <div className="absolute top-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-indigo-200/20 rounded-full blur-[120px] transform-gpu animate-pulse" />
           <div className="absolute bottom-[-10%] left-[5%] w-[40vw] h-[40vw] bg-purple-200/20 rounded-full blur-[120px] transform-gpu" />
         </div>
         
-        {/* Content Wrapper */}
         <div className="relative z-10 w-full min-h-full pb-10">
           {children}
         </div>

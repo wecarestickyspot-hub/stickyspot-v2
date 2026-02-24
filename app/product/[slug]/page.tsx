@@ -2,7 +2,6 @@ import AddToCartButton from '@/components/shop/AddToCartButton';
 import Reviews from "@/components/product/Reviews";
 import WishlistButton from "@/components/shared/WishlistButton";
 import DeliveryChecker from '@/components/product/DeliveryChecker';
-// 🚀 FIX: Import the new client component
 import ProductDescription from '@/components/product/ProductDescription'; 
 import { Star, Truck, ShieldCheck, Zap, AlertCircle, Sparkles, History, Layers, ChevronRight, Home, Tags } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
@@ -159,6 +158,17 @@ export default async function ProductPage({ params }: PageProps) {
     } : undefined
   };
 
+  // 🚀 BEST PRACTICE FIX: Strictly sanitized object for Client Components
+  const safeProductForCart = {
+    id: String(productData.id),
+    title: productData.title,
+    price: Number(productData.price),
+    images: Array.isArray(productData.images) ? productData.images : [],
+    slug: productData.slug,
+    stock: Number(productData.stock),
+    category: String(productData.category),
+  };
+
   return (
     <main className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-20 font-sans relative">
 
@@ -241,25 +251,25 @@ export default async function ProductPage({ params }: PageProps) {
               )}
             </div>
 
-            {/* 🚀 FIX: Replaced raw text with the beautiful collapsible component */}
-            <ProductDescription description={displayDescription} />
 
             {/* Urgency & Stock */}
             <div className="mb-8">
               {productData.stock > 0 ? (
                 isLowStock ? <div className="inline-flex items-center gap-2 bg-rose-50 border border-rose-100 text-rose-600 px-4 py-2 sm:px-5 sm:py-3 rounded-xl text-xs sm:text-sm font-black uppercase tracking-widest animate-pulse"><Zap size={16} className="fill-rose-600" /> Only {productData.stock} left!</div>
-                  : <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-600 px-4 py-2 sm:px-5 sm:py-3 rounded-xl text-xs sm:text-sm font-black uppercase tracking-widest"><Sparkles size={16} className="fill-emerald-600" /> Waterproof & Premium</div>
+                : <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-600 px-4 py-2 sm:px-5 sm:py-3 rounded-xl text-xs sm:text-sm font-black uppercase tracking-widest"><Sparkles size={16} className="fill-emerald-600" /> Waterproof & Premium</div>
               ) : <div className="inline-flex items-center gap-2 bg-slate-100 border border-slate-200 text-slate-500 px-4 py-2 sm:px-5 sm:py-3 rounded-xl text-xs sm:text-sm font-black uppercase tracking-widest">Out of Stock</div>}
             </div>
 
             {/* Actions */}
             <div className="flex flex-col gap-4 mb-10">
-              <AddToCartButton product={productData} />
+              {/* 🚀 FIX: Passed strictly sanitized object */}
+              <AddToCartButton product={safeProductForCart} />
               <LiveTryOn imageSrc={mainImage} />
             </div>
 
             <DeliveryChecker />
 
+              <ProductDescription description={displayDescription} />
             {/* Trust Seals */}
             <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-8">
               <div className="flex items-center gap-3 sm:gap-4 p-4 sm:p-5 bg-white rounded-2xl sm:rounded-[2rem] border border-slate-50 shadow-sm">
@@ -313,7 +323,8 @@ export default async function ProductPage({ params }: PageProps) {
                     image={p.images?.[0] || "/placeholder.png"}
                     category={p.category}
                     stock={p.stock}
-                    createdAt={p.createdAt}
+                    // 🚀 FIX: Prevent serialization error for Date object in ProductCard
+                    createdAt={p.createdAt.toISOString()} 
                     currentUser={userData}
                     isWishlisted={userWishlistIds.includes(p.id)}
                   />

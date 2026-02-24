@@ -14,10 +14,10 @@ interface WishlistButtonProps {
 
 export default function WishlistButton({ productId, isWishlisted, isLoggedIn }: WishlistButtonProps) {
   const [isPending, startTransition] = useTransition();
-  
+
   // 🛡️ FIX 3: Initialize once. Removed the flickering useEffect.
   const [liked, setLiked] = useState(() => isWishlisted);
-  
+
   const router = useRouter();
   const pathname = usePathname();
 
@@ -56,7 +56,7 @@ export default function WishlistButton({ productId, isWishlisted, isLoggedIn }: 
         await toggleWishlist(productId, pathname);
       } catch (error) {
         // Revert UI if server fails
-        setLiked(!newLikedState); 
+        setLiked(!newLikedState);
         toast.error("Something went wrong 😢");
       }
     });
@@ -71,17 +71,17 @@ export default function WishlistButton({ productId, isWishlisted, isLoggedIn }: 
       aria-pressed={liked}
       aria-label={liked ? "Remove from Wishlist" : "Add to Wishlist"}
       // 🚀 UI FIX: Removed p-3. Added exact responsive width/height (w-8/10) and flex-center for perfect centering!
-      className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-full border transition-all duration-300 shadow-lg z-50 hover:scale-110 active:scale-95
-        ${liked
+      className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full border transition-all duration-300 active:scale-95
+      ${liked
           ? "bg-white text-rose-500 border-rose-200"
-          : "bg-black/40 border-white/10 text-white/90 hover:bg-white hover:text-rose-500"
+          : "bg-white text-slate-600 border-slate-200 hover:text-rose-500 hover:border-rose-200"
         }`}
     >
       {/* 💎 UI FIX: Made icon size responsive too (smaller on mobile, standard on PC) */}
-      <Heart 
+      <Heart
         // Using Tailwind width/height instead of fixed pixel size for better responsiveness
         className={`w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] ${liked && !isPending ? "animate-[pop_0.3s_ease]" : ""}`}
-        fill={liked ? "currentColor" : "none"} 
+        fill={liked ? "currentColor" : "none"}
         strokeWidth={2.5}
       />
     </button>

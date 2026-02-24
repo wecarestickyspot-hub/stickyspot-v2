@@ -138,10 +138,10 @@ export default async function HomePage() {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                <Link href="/shop" className="group flex items-center gap-2 px-8 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-500/20 transition-all active:scale-95 text-base">
+                <Link href="/shop" className="group flex items-center gap-2 px-8 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-500/20 transition-all active:scale-95 text-base w-full sm:w-auto justify-center">
                   Shop Now <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <Link href="/custom" className="px-8 py-4 bg-white/40 backdrop-blur-xl border border-slate-200 text-slate-900 font-bold rounded-2xl hover:bg-white/70 transition-all text-base shadow-sm">
+                <Link href="/custom" className="px-8 py-4 bg-white/40 backdrop-blur-xl border border-slate-200 text-slate-900 font-bold rounded-2xl hover:bg-white/70 transition-all text-base shadow-sm w-full sm:w-auto justify-center flex items-center">
                   Custom Order
                 </Link>
               </div>
@@ -173,66 +173,33 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* --- BUSINESS STRATEGY BANNER --- */}
-      <div className="bg-slate-900 py-4 relative z-10 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-center sm:justify-between items-center gap-4 text-white text-sm sm:text-base font-medium">
-          <div className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-emerald-400" /> Cash on Delivery Available</div>
-          <div className="hidden md:block w-1.5 h-1.5 rounded-full bg-slate-700" />
-          <div className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-indigo-400" /> Safe & Secure Payments</div>
-          <div className="hidden md:block w-1.5 h-1.5 rounded-full bg-slate-700" />
-          <div className="flex items-center gap-2"><Zap className="w-5 h-5 text-amber-400" /> Dispatch in 24 Hours</div>
+      {/* --- BUSINESS STRATEGY BANNER (Optimized for Mobile) --- */}
+      <div className="bg-slate-900 py-5 sm:py-4 relative z-10 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-center sm:justify-between items-start sm:items-center gap-3 sm:gap-4 text-white text-xs sm:text-base font-medium">
+          <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" /> Cash on Delivery Available</div>
+          <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-slate-700" />
+          <div className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" /> Safe & Secure Payments</div>
+          <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-slate-700" />
+          <div className="flex items-center gap-2"><Zap className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" /> Dispatch in 24 Hours</div>
         </div>
       </div>
 
-      {/* --- FEATURES SECTION --- */}
-      {/* 🚀 PRO FIX: py-10 for tighter mobile spacing */}
-      <section className="py-10 lg:py-20 relative z-10">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-8 lg:mb-12">
-            <h2 className="text-2xl md:text-4xl font-black tracking-tight text-slate-900 mb-2 lg:mb-3">Why Choose StickySpot?</h2>
-            <p className="text-slate-600 text-sm lg:text-base max-w-xl mx-auto font-medium">We engineer durable art for your expensive gear.</p>
-          </div>
-
-          <div className="flex overflow-x-auto snap-x snap-mandatory md:grid md:grid-cols-3 gap-4 lg:gap-8 pb-6 md:pb-0 scrollbar-hide -mx-6 px-6 md:mx-0 md:px-0">
-            {[
-              // 🚀 PRO FIX: Crisp, short copy for ultra-fast reading
-              { icon: <Zap className="text-indigo-600" size={24} />, title: "Pro Vinyl", desc: "Premium 6mil matte vinyl. Scratch-resistant.", bg: "bg-indigo-50/60" },
-              { icon: <ShieldCheck className="text-emerald-600" size={24} />, title: "Weatherproof", desc: "Rain, sun, or dishwasher. Stays vibrant for years.", bg: "bg-emerald-50/60" },
-              { icon: <Sparkles className="text-pink-600" size={24} />, title: "Clean Peel", desc: "Upgrade anytime without sticky mess. 100% residue-free.", bg: "bg-pink-50/60" }
-            ].map((item, i) => (
-              // 🚀 PRO FIX: p-5 md:p-8 for 15-20% height reduction on mobile
-              <div key={i} className="snap-center shrink-0 w-[85%] sm:w-[300px] md:w-auto relative p-5 md:p-8 rounded-3xl lg:rounded-[2rem] bg-white/50 backdrop-blur-xl border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 hover:bg-white hover:-translate-y-1 transition-all duration-500 text-left group overflow-hidden">
-                {/* 🚀 PRO FIX: Reduced icon bottom margin mb-3 */}
-                <div className={`mb-3 lg:mb-5 p-3 lg:p-4 ${item.bg} w-fit rounded-xl lg:rounded-2xl group-hover:scale-110 transition-transform duration-500 border border-white shadow-sm`}>
-                  {item.icon}
-                </div>
-                <h3 className="text-lg lg:text-xl font-black mb-1 lg:mb-2 text-slate-900">{item.title}</h3>
-                {/* 🚀 PRO FIX: Ultra Smart Trick (line-clamp-2 + leading-snug) */}
-                <p className="text-slate-600 text-xs lg:text-sm font-medium leading-snug line-clamp-2 lg:line-clamp-none">
-                  {item.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* --- LATEST DROPS --- */}
-      <section className="py-20 lg:py-24 max-w-7xl mx-auto px-6 relative z-10">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-6 border-b border-slate-200 pb-8">
+      {/* --- LATEST DROPS (Optimized for Mobile) --- */}
+      <section className="py-16 lg:py-24 max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-10 gap-5 border-b border-slate-200 pb-6 md:pb-8">
           <div>
-            <p className="text-indigo-600 font-bold text-sm sm:text-base mb-3 flex items-center gap-2">
+            <p className="text-indigo-600 font-bold text-xs sm:text-sm md:text-base mb-2 md:mb-3 flex items-center gap-2">
                 Loved by Developers & Creators Across India 🇮🇳
             </p>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900">Latest Drops</h2>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter text-slate-900">Latest Drops</h2>
           </div>
-          <Link href="/shop" className="group flex items-center gap-2 text-sm font-bold text-slate-700 bg-white border border-slate-200 px-6 py-3 rounded-full hover:bg-slate-900 hover:text-white transition-all shadow-sm">
+          <Link href="/shop" className="group flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-slate-700 bg-white border border-slate-200 w-full md:w-auto px-6 py-3 rounded-full hover:bg-slate-900 hover:text-white transition-all shadow-sm">
             View Full Catalog
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {latestProducts.length > 0 ? (
             latestProducts.map((product) => (
               <div key={product.id} className="group h-full relative">
@@ -255,6 +222,34 @@ export default async function HomePage() {
               <p className="text-slate-500 font-medium text-base">New collection dropping soon. Stay tuned! ⚡</p>
             </div>
           )}
+        </div>
+      </section>
+
+        {/* --- FEATURES SECTION --- */}
+      <section className="py-10 lg:py-20 relative z-10">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-8 lg:mb-12">
+            <h2 className="text-2xl md:text-4xl font-black tracking-tight text-slate-900 mb-2 lg:mb-3">Why Choose StickySpot?</h2>
+            <p className="text-slate-600 text-sm lg:text-base max-w-xl mx-auto font-medium">We engineer durable art for your expensive gear.</p>
+          </div>
+
+          <div className="flex overflow-x-auto snap-x snap-mandatory md:grid md:grid-cols-3 gap-4 lg:gap-8 pb-6 md:pb-0 scrollbar-hide -mx-6 px-6 md:mx-0 md:px-0">
+            {[
+              { icon: <Zap className="text-indigo-600" size={24} />, title: "Pro Vinyl", desc: "Premium 6mil matte vinyl. Scratch-resistant.", bg: "bg-indigo-50/60" },
+              { icon: <ShieldCheck className="text-emerald-600" size={24} />, title: "Weatherproof", desc: "Rain, sun, or dishwasher. Stays vibrant for years.", bg: "bg-emerald-50/60" },
+              { icon: <Sparkles className="text-pink-600" size={24} />, title: "Clean Peel", desc: "Upgrade anytime without sticky mess. 100% residue-free.", bg: "bg-pink-50/60" }
+            ].map((item, i) => (
+              <div key={i} className="snap-center shrink-0 w-[85%] sm:w-[300px] md:w-auto relative p-5 md:p-8 rounded-3xl lg:rounded-[2rem] bg-white/50 backdrop-blur-xl border border-slate-200/60 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 hover:bg-white hover:-translate-y-1 transition-all duration-500 text-left group overflow-hidden">
+                <div className={`mb-3 lg:mb-5 p-3 lg:p-4 ${item.bg} w-fit rounded-xl lg:rounded-2xl group-hover:scale-110 transition-transform duration-500 border border-white shadow-sm`}>
+                  {item.icon}
+                </div>
+                <h3 className="text-lg lg:text-xl font-black mb-1 lg:mb-2 text-slate-900">{item.title}</h3>
+                <p className="text-slate-600 text-xs lg:text-sm font-medium leading-snug line-clamp-2 lg:line-clamp-none">
+                  {item.desc}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </div>
