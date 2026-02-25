@@ -9,13 +9,16 @@ export interface CartItem {
   slug: string;
   quantity: number;
   category?: string;
-  isBundle?: boolean;
   stock: number;
+  // 🚀 UPDATE 1: Bundle support fields
+  isBundle?: boolean; 
+  bundleProductIds?: string[]; // Checkout me kaam aayega stock minus karne ke liye
 }
 
 export interface CartTotals {
   subtotal: number;
   discount: number;
+  shippingCost: number; // 🚀 UPDATE 2: Return shipping cost to UI
   finalTotal: number;
   activeOffer: string | null;
   totalItems: number;
@@ -28,19 +31,17 @@ interface CartStore {
   isOpen: boolean; 
   setIsOpen: (isOpen: boolean) => void;
   
-  
   freeShippingThreshold: number; 
   shippingCharge: number;
   setShippingSettings: (threshold: number, charge: number) => void;
   
-  addItem: (item: CartItem) => { success: boolean; message?: string }; // Modified to return status
+  addItem: (item: CartItem) => { success: boolean; message?: string }; 
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   applyDiscount: (amount: number, code: string) => void;
   removeDiscount: () => void;
   clearCart: () => void;
   getCartTotal: () => CartTotals;
-  
 }
 
 export const useCartStore = create<CartStore>()(
@@ -62,12 +63,11 @@ export const useCartStore = create<CartStore>()(
         const existingItem = items.find((item) => item.id === newItem.id);
         const quantityToAdd = newItem.quantity || 1;
 
-        // 🚨 FIX 1: Strict Stock Enforcement
         if (existingItem) {
           const newQuantity = existingItem.quantity + quantityToAdd;
           
           if (newQuantity > existingItem.stock) {
-            return { success: false, message: "Stock limit reached" }; // UI can use this to show a toast
+            return { success: false, message: "Stock limit reached" }; 
           }
 
           set({
@@ -91,7 +91,6 @@ export const useCartStore = create<CartStore>()(
       removeItem: (id) => {
         set((state) => {
           const newItems = state.items.filter((item) => item.id !== id);
-          // 🚨 FIX 2: Auto-remove discount if cart becomes empty
           return {
             items: newItems,
             discount: newItems.length === 0 ? 0 : state.discount,
@@ -103,7 +102,6 @@ export const useCartStore = create<CartStore>()(
       updateQuantity: (id, quantity) =>
         set((state) => ({
           items: state.items.map((item) =>
-            // 🚨 FIX 1: Prevent manual input from exceeding stock
             item.id === id ? { ...item, quantity: Math.min(Math.max(1, quantity), item.stock) } : item
           ),
         })),
@@ -113,23 +111,28 @@ export const useCartStore = create<CartStore>()(
       clearCart: () => set({ items: [], discount: 0, couponCode: null }),
 
       getCartTotal: () => {
-        const { items, discount: manualDiscount, couponCode } = get();
+        const { items, discount: manualDiscount, couponCode, freeShippingThreshold, shippingCharge } = get();
         
-        // 🚨 FIX 3: Safe Floating Point Math (Convert to integer paise/cents first, then divide)
         const subtotal = items.reduce((acc, item) => acc + Math.round(item.price * 100) * item.quantity, 0) / 100;
         const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
 
-        // 🚨 FIX 2: Discount Sanity Check (Don't allow discount to exceed subtotal)
         let finalDiscount = manualDiscount > 0 ? manualDiscount : 0;
         if (finalDiscount > subtotal) {
-          finalDiscount = subtotal; // Clamp discount to subtotal
+          finalDiscount = subtotal; 
         }
+
+        const subtotalAfterDiscount = subtotal - finalDiscount;
+
+        // 🚀 UPDATE 3: Accurate Shipping Calculation based on discounted total
+        const shippingCost = (subtotalAfterDiscount >= freeShippingThreshold || totalItems === 0) 
+            ? 0 
+            : shippingCharge;
 
         return {
           subtotal,
           discount: finalDiscount,
-          // Safe subtraction with float rounding
-          finalTotal: Math.round((subtotal - finalDiscount) * 100) / 100,
+          shippingCost,
+          finalTotal: Math.round((subtotalAfterDiscount + shippingCost) * 100) / 100, // 👈 Ab Final Total ekdum accurate aayega
           activeOffer: finalDiscount > 0 ? couponCode : null,
           totalItems
         };
@@ -138,7 +141,6 @@ export const useCartStore = create<CartStore>()(
     {
       name: "stickyspot-cart-storage",
       storage: createJSONStorage(() => localStorage),
-      // 🚨 FIX 5: Only persist items. Never persist shipping rules or raw discounts permanently.
       partialize: (state) => ({ 
         items: state.items, 
         discount: state.discount, 

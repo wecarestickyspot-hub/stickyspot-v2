@@ -23,10 +23,11 @@ interface ProductProps {
   isWishlisted?: boolean;
   stock?: number;
   createdAt?: Date | string;
+  hideWishlist?: boolean; // 🚀 NAYA PROP: Wishlist chhupane ke liye (For faster Homepage)
 }
 
 export default function ProductCard({
-  id, title, slug, price, originalPrice, rating = 4.8, reviewsCount = 124, image, category, currentUser, isWishlisted = false, stock, createdAt,
+  id, title, slug, price, originalPrice, rating = 4.8, reviewsCount = 124, image, category, currentUser, isWishlisted = false, stock, createdAt, hideWishlist = false,
 }: ProductProps) {
   
   const addItem = useCartStore((state) => state.addItem);
@@ -86,18 +87,21 @@ export default function ProductCard({
             )}
         </div>
 
-        {/* Wishlist Button - TOP-RIGHT */}
-        <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-20 pointer-events-auto">
-            <div className="bg-white/80 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-md hover:shadow-lg shadow-sm border border-white p-1 hover:scale-110 transition-transform">
+        {/* 🚀 FIX 3: Wishlist Button - TOP-RIGHT (Conditionally rendered & Mobile Scaled) */}
+        {!hideWishlist && (
+          <div className="absolute top-3 right-3 sm:top-5 sm:right-5 z-20 pointer-events-auto">
+            {/* Added scale-75 sm:scale-100 so it doesn't look giant on mobile */}
+            <div className="bg-white/80 backdrop-blur-md rounded-[0.85rem] sm:rounded-2xl shadow-md hover:shadow-lg border border-white p-0.5 sm:p-1 hover:scale-110 transition-transform scale-75 sm:scale-100 origin-top-right">
                 <WishlistButton productId={id} isWishlisted={isWishlisted} isLoggedIn={!!currentUser} />
             </div>
-        </div>
+          </div>
+        )}
 
         {/* 🔍 SEO & IMAGE */}
         <Link href={`/product/${slug}`} title={`View details for ${title}`} className="absolute inset-0 p-4 sm:p-6 flex items-center justify-center">
           <div className="relative w-full h-full">
             <CldImage
-              src={image || "/placeholder.png"} // 🚀 FIX 3: Added Fallback Image to stop broken icons
+              src={image || "/placeholder.png"} 
               alt={`${title} sticker`} 
               fill
               loading="lazy"

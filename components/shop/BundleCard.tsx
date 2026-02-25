@@ -1,16 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import { useCartStore } from "@/store/useCartStore";
 import { Plus, Sparkles, Loader2, Check } from "lucide-react";
 import toast from "react-hot-toast";
-import CldImage from "@/components/shared/CldImage"; // 🛡️ FIX 4: Use consistent image wrapper
+import CldImage from "@/components/shared/CldImage"; 
 import { useState } from "react";
 
-// 🛡️ FIX 1: Strict Typings (No 'any')
 interface BundleProduct {
   id: string;
-  images: string[];
+  images: string[] | string; // 🛡️ Safely handle both string or array
   stock: number;
   price: number;
 }
@@ -31,13 +29,12 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
   const [isAdded, setIsAdded] = useState(false);
 
   // 🧠 REAL ECOMMERCE LOGIC: Calculate max available stock for this bundle
-  // A bundle's stock is limited by its scarcest product
-  const minAvailableStock = bundle.products.length > 0 
-    ? Math.min(...bundle.products.map((p) => p.stock)) 
+  const minAvailableStock = bundle.products?.length > 0 
+    ? Math.min(...bundle.products.map((p) => p.stock || 0)) 
     : 0;
 
   // Calculate Original Price (Sum of individual product prices)
-  const originalPrice = bundle.products.reduce((acc, curr) => acc + curr.price, 0);
+  const originalPrice = bundle.products?.reduce((acc, curr) => acc + (curr.price || 0), 0) || 0;
   const savings = originalPrice - bundle.price;
 
   // Check how many of this bundle are already in the cart
@@ -52,7 +49,6 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
     e.preventDefault();
     e.stopPropagation();
 
-    // 🛡️ FIX 2 & 3: Deep Stock Validation
     if (isProcessing || isOutOfStock) return;
 
     if (maxAddable <= 0) {
@@ -68,10 +64,12 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
       price: bundle.price,
       image: bundle.image,
       slug: bundle.slug,
-      quantity: 1, // Only adding 1 bundle at a time via this card
-      isBundle: true, // Tag it so checkout knows it's a bundle
-      stock: minAvailableStock, // Ensure store knows the cap
-      category: "Bundle" // Fallback category
+      quantity: 1, 
+      isBundle: true, 
+      // 🚀 FIX 1: Send the product IDs to the cart so checkout knows what to deduct!
+      bundleProductIds: bundle.products.map(p => p.id), 
+      stock: minAvailableStock, 
+      category: "Bundle" 
     });
 
     setIsAdded(true);
@@ -85,17 +83,16 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
   };
 
   return (
-    <div className="group relative bg-[#0F0F0F] border border-white/10 rounded-3xl overflow-hidden hover:border-pink-500/50 transition-all duration-500 flex flex-col h-full">
+    <div className="group relative bg-[#0F0F0F] border border-white/10 rounded-3xl overflow-hidden hover:border-indigo-500/50 transition-all duration-500 flex flex-col h-full">
       {/* Badge */}
-      <div className="absolute top-4 right-4 z-10 bg-pink-600 text-white text-[10px] font-black tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
+      <div className="absolute top-4 right-4 z-10 bg-indigo-600 text-white text-[10px] font-black tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
         <Sparkles size={12} className="animate-pulse" /> VALUE PACK
       </div>
 
       {/* Image Wrap */}
       <div className="relative aspect-[4/3] overflow-hidden bg-gray-900 shrink-0">
-        {/* 🛡️ FIX 4: Consistent CldImage usage */}
         <CldImage 
-          src={bundle.image} 
+          src={bundle.image || "/placeholder.png"} 
           alt={bundle.title} 
           fill 
           sizes="(max-width: 768px) 100vw, 50vw"
@@ -104,12 +101,17 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
         
         {/* Overlay with included product icons */}
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent flex gap-2">
-           {bundle.products.slice(0, 4).map((p) => (
-             <div key={p.id} className="w-8 h-8 rounded-full border border-white/20 bg-black/50 overflow-hidden relative shadow-sm">
-                <CldImage src={p.images[0] || "/placeholder.png"} alt="Product" fill className="object-cover" />
-             </div>
-           ))}
-           {bundle.products.length > 4 && (
+           {bundle.products?.slice(0, 4).map((p) => {
+             // 🛡️ FIX 2: Safely extract image whether it's an array or string
+             const imgSrc = Array.isArray(p.images) ? p.images[0] : (p.images || "/placeholder.png");
+             
+             return (
+               <div key={p.id} className="w-8 h-8 rounded-full border border-white/20 bg-black/50 overflow-hidden relative shadow-sm">
+                  <CldImage src={imgSrc} alt="Product" fill className="object-cover" />
+               </div>
+             )
+           })}
+           {bundle.products?.length > 4 && (
              <div className="w-8 h-8 rounded-full border border-white/20 bg-black/80 flex items-center justify-center text-[10px] font-bold text-white shadow-sm">
                +{bundle.products.length - 4}
              </div>
@@ -118,7 +120,7 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
       </div>
 
       <div className="p-6 flex flex-col flex-1">
-        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-pink-400 transition-colors line-clamp-2">
+        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors line-clamp-2">
           {bundle.title}
         </h3>
         <p className="text-sm text-gray-400 line-clamp-2 mb-6">
@@ -151,7 +153,7 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
                   ? "bg-emerald-500 text-white shadow-emerald-500/20" 
                   : (isOutOfStock || maxAddable <= 0)
                     ? "bg-white/5 text-white/30 border border-white/10 cursor-not-allowed"
-                    : "bg-white text-black hover:bg-pink-500 hover:text-white"
+                    : "bg-white text-black hover:bg-indigo-600 hover:text-white"
                 }
               `}
             >

@@ -10,7 +10,8 @@ import StoreInitializer from "@/components/shared/StoreInitializer";
 import AnnouncementBar from "@/components/shared/AnnouncementBar";
 import Navbar from "@/components/shared/Navbar";
 import { cache } from "react";
-// 🛡️ Google Analytics ki official library
+
+// 🛡️ Google Analytics ki official library (Next.js isko by default optimize karta hai)
 import { GoogleAnalytics } from '@next/third-parties/google';
 
 // ⚡ FIX 3: Lazy Loading (CartDrawer sirf tab load hoga jab client-side ready ho)
@@ -19,11 +20,13 @@ import CartDrawerWrapper from "@/components/shop/CartDrawerWrapper";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap", // 🚀 LCP FIX: Text turant dikhega bina font ke download hone ka wait kiye!
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap", // 🚀 LCP FIX: Same here!
 });
 
 // ⚡ FIX 1: Layout Revalidation (Settings DB ko har 1 ghante mein sirf ek baar hit karega)
@@ -109,7 +112,7 @@ export default async function RootLayout({
           
         </ClerkProvider>
 
-        {/* 📊 Google Analytics Setup */}
+        {/* 📊 Google Analytics Setup (Already non-blocking) */}
         <GoogleAnalytics gaId="G-1TF3QR67M8" />
       </body>
     </html>

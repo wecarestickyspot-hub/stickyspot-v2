@@ -58,13 +58,13 @@ export default function Footer() {
             </p>
             <div className="flex gap-4 pt-2">
               {/* ♿ FIX 3: Accessibility (aria-hidden) added to icons */}
-              <a href="https://instagram.com/stickyspot" target="_blank" rel="noopener noreferrer" aria-label="Visit StickySpot Instagram" className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-400 hover:bg-pink-50 hover:text-pink-500 hover:scale-110 transition-all shadow-sm border border-slate-100">
+              <a href="https://www.instagram.com/sticky_spot_" target="_blank" rel="noopener noreferrer" aria-label="Visit StickySpot Instagram" className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-400 hover:bg-pink-50 hover:text-pink-500 hover:scale-110 transition-all shadow-sm border border-slate-100">
                 <Instagram aria-hidden="true" size={18} strokeWidth={2} />
               </a>
-              <a href="https://twitter.com/stickyspot" target="_blank" rel="noopener noreferrer" aria-label="Visit StickySpot Twitter" className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-400 hover:bg-sky-50 hover:text-sky-500 hover:scale-110 transition-all shadow-sm border border-slate-100">
+              {/* <a href="https://twitter.com/stickyspot" target="_blank" rel="noopener noreferrer" aria-label="Visit StickySpot Twitter" className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-400 hover:bg-sky-50 hover:text-sky-500 hover:scale-110 transition-all shadow-sm border border-slate-100">
                 <Twitter aria-hidden="true" size={18} strokeWidth={2} />
-              </a>
-              <a href="https://facebook.com/stickyspot" target="_blank" rel="noopener noreferrer" aria-label="Visit StickySpot Facebook" className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-600 hover:scale-110 transition-all shadow-sm border border-slate-100">
+              </a> */}
+              <a href="https://www.facebook.com/Stickyspot01" target="_blank" rel="noopener noreferrer" aria-label="Visit StickySpot Facebook" className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-600 hover:scale-110 transition-all shadow-sm border border-slate-100">
                 <Facebook aria-hidden="true" size={18} strokeWidth={2} />
               </a>
             </div>

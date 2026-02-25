@@ -8,7 +8,9 @@ const isPublicRoute = createRouteMatcher([
   "/shop(.*)",        // Shop
   "/product(.*)",     // Product Details
   "/cart",            // Cart
-  "/api/webhooks(.*)",// 👈 Webhooks open for Razorpay/Stripe (Server-to-Server)
+  "/legal(.*)",       // 🚀 FIX: Privacy Policy, Terms, Refund, Shipping aadi ke liye
+  "/contact",         // 🚀 FIX: Contact Us page
+  "/api/webhooks(.*)",// Webhooks open for Razorpay/Stripe (Server-to-Server)
   "/sign-in(.*)",     // Login Page
   "/sign-up(.*)"      // Signup Page
 ]);

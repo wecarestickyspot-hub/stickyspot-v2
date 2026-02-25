@@ -4,14 +4,15 @@ import { useState, useEffect, useTransition } from "react";
 import { Plus, Trash2, Package, Check, Loader2, Boxes, ImagePlus, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
 import Image from "next/image";
-import slugify from "slugify"; // ✅ FIX 4: Slug generation
-// import { createBundle, deleteBundle } from "@/lib/actions"; 
+import slugify from "slugify"; 
+// 🚀 FIX: Ab Real Backend functions use honge
+import { getAdminBundleData, createBundle, deleteBundle } from "@/lib/actions"; 
 
 export type Product = {
   id: string;
   title: string;
   price: number;
-  image: string;
+  image: string; // Assuming standard products have single image or picking first
   stock: number;
   status: "ACTIVE" | "DRAFT" | "ARCHIVED";
 };
@@ -30,7 +31,6 @@ export default function AdminBundlesPage() {
   const [bundles, setBundles] = useState<Bundle[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   
-  // ✅ FIX 4: Slug state management
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [isSlugEdited, setIsSlugEdited] = useState(false);
@@ -47,27 +47,29 @@ export default function AdminBundlesPage() {
     }
   }, [title, isSlugEdited]);
 
+  // 🚀 FIX: Fetching REAL data from Database
   useEffect(() => {
     const fetchData = async () => {
-      setTimeout(() => {
-        // ✅ FIX 7: Backend se hi sirf ACTIVE items aayenge mock data mein
-        setProducts([
-          { id: "prod_1", title: "Cyberpunk Glitch Sticker", price: 49, image: "/placeholder.png", stock: 100, status: "ACTIVE" },
-          { id: "prod_2", title: "JavaScript Logo Pack", price: 99, image: "/placeholder.png", stock: 2, status: "ACTIVE" }, // Low stock
-          { id: "prod_3", title: "Holographic Anime Eye", price: 149, image: "/placeholder.png", stock: 0, status: "ACTIVE" }, // Out of stock
-        ]);
-        setBundles([
-          { id: "bun_1", title: "Anime Starter Pack", slug: "anime-starter-pack", price: 199, image: "/placeholder.png", itemCount: 5 },
-          { id: "bun_2", title: "Developer Super Combo", slug: "dev-super-combo", price: 399, image: "/placeholder.png", itemCount: 10 },
-        ]);
+      try {
+        const data = await getAdminBundleData();
+        // Fallback image handling logic if product has array of images
+        const mappedProducts = data.products.map((p: any) => ({
+             ...p,
+             image: Array.isArray(p.image) ? p.image[0] : (p.image || "/placeholder.png")
+        }));
+        
+        setProducts(mappedProducts);
+        setBundles(data.bundles);
+      } catch (error) {
+        toast.error("Failed to load data!");
+      } finally {
         setLoading(false);
-      }, 800);
+      }
     };
     fetchData();
   }, []);
 
   const toggleProduct = (id: string, stock: number) => {
-    // ✅ FIX 3: Prevent selection if stock is 0
     if (stock === 0) {
       toast.error("Cannot add out-of-stock item to a bundle! 🚫");
       return;
@@ -79,12 +81,15 @@ export default function AdminBundlesPage() {
 
   const handleDeleteBundle = (id: string, bundleTitle: string) => {
     if (window.confirm(`Are you sure you want to delete the "${bundleTitle}" bundle? This cannot be undone.`)) {
-      // ✅ FIX 6: Wrapped delete in startTransition
       startTransition(async () => {
-         // await deleteBundle(id);
-         await new Promise(res => setTimeout(res, 500));
-         toast.success("Bundle deleted successfully! 🗑️");
-         setBundles(prev => prev.filter(b => b.id !== id));
+         // 🚀 FIX: Real Delete Call
+         const res = await deleteBundle(id);
+         if(res.success) {
+            toast.success("Bundle deleted successfully! 🗑️");
+            setBundles(prev => prev.filter(b => b.id !== id));
+         } else {
+            toast.error(res.error || "Failed to delete bundle");
+         }
       });
     }
   };
@@ -99,41 +104,41 @@ export default function AdminBundlesPage() {
     const formData = new FormData(e.currentTarget);
     const imageUrl = formData.get("image") as string;
 
-    // ✅ FIX 2: Stronger client-side URL validation (Server will still enforce Zod)
     if (!imageUrl.startsWith("https://res.cloudinary.com/")) {
       return toast.error("Please provide a valid secure Cloudinary image URL 🔗");
     }
 
-    // ✅ FIX 5: Capture count BEFORE resetting state to avoid stale closures
     const finalItemCount = selectedIds.length;
     const finalTitle = title;
     const finalSlug = slug;
 
     startTransition(async () => {
       formData.set("productIds", JSON.stringify(selectedIds));
-      formData.set("slug", finalSlug); // Ensure slug is sent
+      formData.set("slug", finalSlug); 
       
-      // const res = await createBundle(formData); 
+      // 🚀 FIX: Real Database Create Call
+      const res = await createBundle(formData); 
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast.success("Bundle Created Successfully! 🎉");
-      
-      // Reset form safely
-      setSelectedIds([]);
-      setTitle("");
-      setSlug("");
-      setIsSlugEdited(false);
-      (e.target as HTMLFormElement).reset();
-      
-      setBundles(prev => [{
-        id: `bun_${Date.now()}`,
-        title: finalTitle,
-        slug: finalSlug,
-        price: Number(formData.get("price")),
-        image: imageUrl,
-        itemCount: finalItemCount // Using captured variable
-      }, ...prev]);
+      if (res.success && res.bundle) {
+          toast.success("Bundle Created Successfully! 🎉");
+          
+          setSelectedIds([]);
+          setTitle("");
+          setSlug("");
+          setIsSlugEdited(false);
+          (e.target as HTMLFormElement).reset();
+          
+          setBundles(prev => [{
+            id: res.bundle.id, // Using real ID from DB
+            title: finalTitle,
+            slug: finalSlug,
+            price: Number(formData.get("price")),
+            image: imageUrl,
+            itemCount: finalItemCount 
+          }, ...prev]);
+      } else {
+          toast.error(res.error || "Failed to create bundle");
+      }
     });
   };
 
@@ -162,7 +167,6 @@ export default function AdminBundlesPage() {
               <input required value={title} onChange={(e) => setTitle(e.target.value)} name="title" minLength={3} placeholder="e.g. Hacker Pack" className="w-full bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-2xl focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-slate-900 placeholder:text-slate-300" />
             </div>
 
-            {/* ✅ FIX 4: Slug Input */}
             <div>
               <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">SEO Slug</label>
               <div className="flex bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
@@ -203,7 +207,6 @@ export default function AdminBundlesPage() {
                    <div className="text-center text-slate-400 text-sm font-bold p-4 mt-8">No active products found.</div>
                 ) : (
                   products.map(product => {
-                    // ✅ FIX 3: Out of stock / Low stock awareness
                     const isOutOfStock = product.stock === 0;
                     const isLowStock = product.stock > 0 && product.stock <= 5;
 

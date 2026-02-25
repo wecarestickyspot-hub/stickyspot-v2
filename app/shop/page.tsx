@@ -3,7 +3,6 @@ import ShopFilters from "@/components/shop/ShopFilters";
 import ShopShippingBar from "@/components/shop/ShopShippingBar";
 import { BundleCard } from "@/components/shop/BundleCard";
 import { prisma } from "@/lib/prisma";
-import { currentUser } from "@clerk/nextjs/server";
 import { PackageOpen, Sparkles, Layers, ChevronLeft, ChevronRight, BadgeCheck, Package, Zap } from "lucide-react";
 import Link from "next/link";
 import { Metadata } from "next";
@@ -71,6 +70,7 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
     default: orderBy.createdAt = "desc";
   }
 
+  // 🚀 CLEAN & FAST: Removed currentUser and slow queries from here
   const [products, totalProducts, bundles, categoriesData] = await Promise.all([
     prisma.product.findMany({
       where,
@@ -113,22 +113,6 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
   const totalPages = Math.ceil(totalProducts / limit);
   const categoriesList = ["All", ...categoriesData.map((c) => c.category)];
 
-  const user = await currentUser();
-  let userWishlistIds: string[] = [];
-  const userData = user ? { id: user.id, firstName: user.firstName, imageUrl: user.imageUrl } : undefined;
-
-  if (user && products.length > 0) {
-    const productIdsOnPage = products.map(p => p.id);
-    const wishlistItems = await prisma.wishlist.findMany({
-      where: { 
-        userId: user.id,
-        productId: { in: productIdsOnPage }
-      },
-      select: { productId: true }
-    });
-    userWishlistIds = wishlistItems.map(item => item.productId);
-  }
-
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -153,7 +137,6 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-12 relative z-10">
         
         {/* 🏷️ Header */}
-        {/* 🚀 FIX: Made hero section way more compact on mobile */}
         <div className="text-center mb-6 lg:mb-16 animate-in fade-in slide-in-from-bottom-4 duration-1000">
           <div className="hidden sm:inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
             <Zap size={12} className="fill-indigo-600" /> Premium Collection 2026
@@ -186,11 +169,9 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
         )}
 
         {/* 🎛️ SHOP LAYOUT */}
-        {/* 🚀 FIX: Changed to flex-col for mobile, placing filters naturally on top */}
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start">
           
           {/* Sidebar Filters */}
-          {/* 🚀 FIX: Make it full width on mobile, and sticky only on LG screens */}
           <aside className="w-full lg:w-64 shrink-0 lg:sticky lg:top-36 z-30">
             <ShopFilters categories={categoriesList} />
           </aside>
@@ -222,10 +203,10 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
                         price={product.price}
                         image={product.images?.[0] ?? "/placeholder.png"}
                         category={product.category}
-                        currentUser={userData}
-                        isWishlisted={userWishlistIds.includes(product.id)}
                         stock={product.stock}
-                        createdAt={product.createdAt}
+                        // 🚀 NAYA FIX: ISO String Taki error na aaye aur Client Component theek se padhe
+                        createdAt={product.createdAt.toISOString()}
+                        // Yaha 'hideWishlist' pass NAHI kar rahe, toh iska matlab Wishlist ka icon is page par dikhega!
                       />
                     </div>
                   ))}

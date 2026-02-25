@@ -237,25 +237,41 @@ export async function setUserRole(userId: string, role: string) {
 // 4. BUNDLES, REVIEWS & WISHLIST
 // ==========================================
 
-export async function createBundle(formData: FormData, productIds: string[]) {
+export async function createBundle(formData: FormData) {
   try {
     const adminCheck = await checkAdmin("ADMIN");
-    if (!adminCheck.authorized || productIds.length === 0) return { error: "Error" };
+    if (!adminCheck.authorized) return { success: false, error: "Unauthorized" };
 
     const title = z.string().min(3).parse(formData.get("title"));
-    await prisma.bundle.create({
+    const price = z.coerce.number().parse(formData.get("price"));
+    const description = formData.get("description") as string;
+    const image = formData.get("image") as string;
+    const slug = formData.get("slug") as string || `${generateSlug(title)}-${nanoid(4)}`;
+    
+    // Parse the JSON string sent from frontend array
+    const productIdsString = formData.get("productIds") as string;
+    const productIds = JSON.parse(productIdsString) as string[];
+
+    if (productIds.length < 2) return { success: false, error: "Need at least 2 products" };
+
+    const newBundle = await prisma.bundle.create({
       data: {
-        title, price: z.coerce.number().parse(formData.get("price")),
-        description: formData.get("description") as string,
-        image: formData.get("image") as string,
-        slug: `${generateSlug(title)}-${nanoid(4)}`,
-        products: { connect: productIds.map(id => ({ id })) }
+        title,
+        price,
+        description,
+        image,
+        slug,
+        products: { connect: productIds.map(id => ({ id })) } // Prisma syntax to connect M2M
       }
     });
 
-    revalidatePath("/admin/bundles"); revalidatePath("/shop");
-    return { success: true };
-  } catch (error) { return { error: "Bundle failed" }; }
+    revalidatePath("/admin/bundles"); 
+    revalidatePath("/shop");
+    return { success: true, bundle: newBundle };
+  } catch (error) { 
+    console.error("Bundle Create Error:", error);
+    return { success: false, error: "Bundle creation failed" }; 
+  }
 }
 
 export async function addReview(formData: FormData) {
@@ -428,4 +444,55 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
     console.error("Action Error:", error);
     return { success: false, error: error.message };
   }
+}
+
+// ==========================================
+// 📦 BUNDLE ENGINE (Updated with Admin Data Fetcher)
+// ==========================================
+
+export async function getAdminBundleData() {
+  const adminCheck = await checkAdmin("ADMIN");
+  if (!adminCheck.authorized) throw new Error("Unauthorized");
+
+  // 1. Fetch only ACTIVE products to show in the checkboxes
+  const products = await prisma.product.findMany({
+    where: { status: "ACTIVE" },
+    select: { 
+      id: true, 
+      title: true, 
+      price: true, 
+      images: true, 
+      stock: true, 
+      status: true 
+    }
+  });
+
+  // 2. Fetch existing Bundles
+  const bundles = await prisma.bundle.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      products: { select: { id: true } } // Fetching length of products connected
+    }
+  });
+
+  // 3. Format the data perfectly for the frontend UI
+  const formattedProducts = products.map(p => ({
+    id: p.id,
+    title: p.title,
+    price: p.price,
+    image: Array.isArray(p.images) ? p.images[0] : "/placeholder.png", // Get 1st image
+    stock: p.stock,
+    status: p.status
+  }));
+
+  const formattedBundles = bundles.map(b => ({
+    id: b.id,
+    title: b.title,
+    slug: b.slug,
+    price: b.price,
+    image: b.image,
+    itemCount: b.products.length
+  }));
+
+  return { products: formattedProducts, bundles: formattedBundles };
 }
