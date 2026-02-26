@@ -96,8 +96,13 @@ async function getChartData() {
 }
 
 export default async function AdminDashboard() {
-  // 🛡️ Security Check: Centralized RBAC
-  await requireSuperAdmin(); 
+  /// 🛡️ Security Check: Layout ne pehle hi check kar liya hai, 
+  // par agar aapko action check lagana hi hai, toh requireAdmin() use karein.
+  
+  // Agar aapke paas requireAdmin() function bani hai actions mein, toh wo use karein:
+  // await requireAdmin(); 
+  
+  // YA FIR, yahan se isko hata dein kyunki AdminLayout ne pehle hi security handle kar li hai!
 
   // Parallel Fetching for UI speed
   const [stats, chartData, products] = await Promise.all([

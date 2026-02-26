@@ -6,7 +6,8 @@ import { Roles } from "@/types/globals";
 const isPublicRoute = createRouteMatcher([
   "/",                // Home
   "/shop(.*)",        // Shop
-  "/product(.*)",     // Product Details
+  "/product(.*)",   // Product Details
+  "/custom(.*)",    
   "/cart",            // Cart
   "/legal(.*)",       // 🚀 FIX: Privacy Policy, Terms, Refund, Shipping aadi ke liye
   "/contact",         // 🚀 FIX: Contact Us page
