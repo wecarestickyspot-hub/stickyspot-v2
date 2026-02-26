@@ -113,7 +113,7 @@ export async function POST(req: Request) {
       // ⚡ 8. BROWSER/CDN CACHING (Cache identical pincode requests for 5 minutes)
       return NextResponse.json({
         success: true,
-        city: serviceData.data.city || "your city",
+        city: serviceData.data.city || pincode,
         state: serviceData.data.state,
         date: formattedDate,
         cod: fastestCourier.cod === 1,
