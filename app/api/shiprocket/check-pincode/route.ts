@@ -80,7 +80,7 @@ export async function POST(req: Request) {
 
     const pickupPincode = process.env.PICKUP_PINCODE || "302001";
     const weight = 0.1; // 100 grams
-    const cod = 1;
+    const cod = 0; // Cash on Delivery not applicable for pincode check
 
     const serviceUrl = `https://apiv2.shiprocket.in/v1/external/couriers/courier/serviceability/?pickup_postcode=${pickupPincode}&delivery_postcode=${pincode}&weight=${weight}&cod=${cod}`;
 
