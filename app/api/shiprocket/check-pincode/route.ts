@@ -78,15 +78,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "Service unavailable temporarily" }, { status: 500 });
     }
 
-    const pickupPincode = process.env.PICKUP_PINCODE || "302001";
-    const weight = 0.1; // 100 grams
-    const cod = 0; // Cash on Delivery not applicable for pincode check
-
-    const serviceUrl = `https://apiv2.shiprocket.in/v1/external/couriers/courier/serviceability/?pickup_postcode=${pickupPincode}&delivery_postcode=${pincode}&weight=${weight}&cod=${cod}`;
+    // 🚀 FIX: Correct Pickup Pincode (Dashboard ke hisaab se 332001)
+    const pickupPincode = process.env.PICKUP_PINCODE || "332001";
+    
+    // 🚀 FIX: URL mein weight=0.5, cod=1 aur declared_value=250 fix kar diya hai
+    const serviceUrl = `https://apiv2.shiprocket.in/v1/external/courier/serviceability/?pickup_postcode=${pickupPincode}&delivery_postcode=${pincode}&weight=0.5&cod=1&declared_value=250`;
 
     // ⏱️ 5. TIMEOUT HANDLING (Prevents server freeze if Shiprocket is down)
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000); // 5 seconds max
+    const timeout = setTimeout(() => controller.abort(), 8000); // 🚀 Badha kar 8 seconds kar diya cold starts ke liye
 
     const serviceabilityRes = await fetch(serviceUrl, {
       headers: { Authorization: `Bearer ${token}` },
