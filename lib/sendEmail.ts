@@ -1,28 +1,6 @@
 import { render } from "@react-email/render";
 import OrderEmail from "@/components/emails/OrderEmail";
 
-// 🛡️ Safe Require for Turbopack/Next.js Build
-const SibApiV3Sdk = require("@getbrevo/brevo");
-
-/**
- * 💡 Build Error Fix: 
- * Global scope mein 'new' constructor call karne se build fail hoti hai.
- * Isliye hum function ke andar instance banayenge.
- */
-const getBrevoApi = () => {
-  if (!process.env.BREVO_API_KEY) {
-    console.error("❌ BREVO_API_KEY is missing!");
-    return null;
-  }
-
-  const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-  apiInstance.setApiKey(
-    SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey,
-    process.env.BREVO_API_KEY
-  );
-  return apiInstance;
-};
-
 export async function sendOrderConfirmation(
   email: string,
   customerName: string,
@@ -30,33 +8,47 @@ export async function sendOrderConfirmation(
   amount: number,
   items: any[]
 ) {
-  const apiInstance = getBrevoApi();
-  if (!apiInstance) return { success: false, error: "API not configured" };
+  if (!process.env.BREVO_API_KEY) {
+    console.error("❌ BREVO_API_KEY is missing!");
+    return { success: false, error: "API Key missing" };
+  }
 
   try {
+    // 1. Email ka HTML design banayein
     const emailHtml = await render(
-      OrderEmail({
-        customerName,
-        orderId,
-        amount,
-        items,
-      })
+      OrderEmail({ customerName, orderId, amount, items })
     );
 
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
     const displayId = orderId.slice(-8).toUpperCase();
 
-    sendSmtpEmail.subject = `Order Confirmed! #${displayId}`;
-    sendSmtpEmail.htmlContent = emailHtml;
-    sendSmtpEmail.sender = { name: "StickySpot", email: "wecarestickyspot@gmail.com" };
-    sendSmtpEmail.to = [{ email, name: customerName }];
+    // 🚀 2. Direct Fetch API (100% Vercel Safe, No SDK Needed)
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "api-key": process.env.BREVO_API_KEY,
+      },
+      body: JSON.stringify({
+        sender: { name: "StickySpot", email: "wecarestickyspot@gmail.com" },
+        to: [{ email: email, name: customerName }],
+        subject: `Order Confirmed! #${displayId}`,
+        htmlContent: emailHtml,
+      }),
+    });
 
-    const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
-    console.log("✅ Email Sent:", response.body);
-    return { success: true, data: response.body };
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("❌ Brevo API Error:", data);
+      return { success: false, error: data };
+    }
+
+    console.log("✅ Email Sent via Fetch API:", data);
+    return { success: true, data };
 
   } catch (error: any) {
-    console.error("❌ Email Error:", error?.response?.body || error);
-    return { success: false, error };
+    console.error("❌ Email Fetch Error:", error);
+    return { success: false, error: error.message };
   }
 }
