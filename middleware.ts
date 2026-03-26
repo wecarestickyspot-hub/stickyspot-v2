@@ -12,6 +12,7 @@ const isPublicRoute = createRouteMatcher([
   "/legal(.*)",       // 🚀 FIX: Privacy Policy, Terms, Refund, Shipping aadi ke liye
   "/contact",         // 🚀 FIX: Contact Us page
   "/api/webhooks(.*)",// Webhooks open for Razorpay/Stripe (Server-to-Server)
+  "/api/razorpay(.*)",
   "/sign-in(.*)",     // Login Page
   "/sign-up(.*)"      // Signup Page
 ]);
