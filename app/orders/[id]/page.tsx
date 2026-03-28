@@ -5,38 +5,40 @@ import Navbar from "@/components/shared/Navbar";
 import Link from "next/link";
 import { 
   CheckCircle, ShoppingBag, ArrowRight, Sparkles, 
-  ShieldCheck, Loader2, Calendar, MapPin, Download, 
+  Loader2, Calendar, MapPin, Download, 
   Truck, Package, Info
 } from "lucide-react";
 import OrderEffects from "@/components/order/OrderEffects";
 
-export const dynamic = "force-dynamic"; // 🛡️ Fix 1: Clear intent instead of revalidate = 0
+export const dynamic = "force-dynamic"; 
 
-export default async function OrderDetailsPage({ params }: { params: { id: string } }) {
+// 🚀 FIX 1: params ko Promise banana zaroori hai Next.js 15 mein
+export default async function OrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await currentUser();
   if (!user) redirect("/sign-in");
 
+  // 🚀 FIX 2: params ko pehle await karna zaroori hai!
+  const resolvedParams = await params;
+
+  // Ab resolvedParams.id use hoga yahan 👇
   const order = await prisma.order.findUnique({
-    where: { id: params.id, userId: user.id }, 
+    where: { id: resolvedParams.id, userId: user.id }, 
     include: { items: true }
   });
 
   if (!order) redirect("/orders");
 
-  // 🛡️ Fix 2: Robust Pending Logic
   const isPending = ["PENDING", "PROCESSING", "PRINTING", "UNVERIFIED"].includes(order.status);
   
-  // 🚀 Fix 3: Smart Estimated Delivery Logic
   const estDelivery = new Date(order.createdAt);
   if (order.status === "SHIPPED") {
-    estDelivery.setDate(estDelivery.getDate() + 3); // 3 days after shipping
+    estDelivery.setDate(estDelivery.getDate() + 3); 
   } else if (order.paymentMethod === "COD") {
-    estDelivery.setDate(estDelivery.getDate() + 6); // Extra time for COD processing
+    estDelivery.setDate(estDelivery.getDate() + 6); 
   } else {
-    estDelivery.setDate(estDelivery.getDate() + 4); // Standard Prepaid
+    estDelivery.setDate(estDelivery.getDate() + 4); 
   }
 
-  // 🎨 Status Timeline Logic
   const timelineStages = [
     { label: "Order Placed", isCompleted: true },
     { label: "Packed", isCompleted: ["SHIPPED", "DELIVERED"].includes(order.status) },
@@ -50,7 +52,6 @@ export default async function OrderDetailsPage({ params }: { params: { id: strin
 
       <OrderEffects orderId={order.id} status={order.status} />
 
-      {/* 🔮 Background Decoration */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-indigo-200/20 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-[-10%] left-[-5%] w-[40vw] h-[40vw] bg-emerald-100/30 rounded-full blur-[100px]" />
@@ -58,7 +59,6 @@ export default async function OrderDetailsPage({ params }: { params: { id: strin
 
       <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10 pt-32 pb-20">
         
-        {/* ⏳ WAITING FOR PAYMENT / PROCESSING STATE */}
         {isPending ? (
            <div className="text-center bg-white border border-slate-100 p-16 rounded-[3rem] shadow-xl shadow-slate-200/50 max-w-lg w-full animate-in zoom-in-95 duration-500">
                <Loader2 className="w-20 h-20 text-indigo-600 animate-spin mx-auto mb-8" strokeWidth={2} />
@@ -68,7 +68,6 @@ export default async function OrderDetailsPage({ params }: { params: { id: strin
                </p>
            </div>
         ) : (
-           // 🎉 CONFIRMED / SHIPPED / DELIVERED STATE 
            <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-8 duration-700">
                 <div className="text-center mb-12">
                     <div className="relative inline-block mb-8">
@@ -86,9 +85,7 @@ export default async function OrderDetailsPage({ params }: { params: { id: strin
                     </h1>
                 </div>
 
-                {/* 🚀 UX Upgrade 1: Visual Order Timeline */}
                 <div className="bg-white border border-slate-100 rounded-3xl p-6 mb-8 flex items-center justify-between shadow-sm relative overflow-hidden">
-                    {/* Connection Line */}
                     <div className="absolute top-1/2 left-10 right-10 h-1 bg-slate-100 -translate-y-1/2 z-0"></div>
                     
                     {timelineStages.map((stage, index) => (
@@ -106,7 +103,6 @@ export default async function OrderDetailsPage({ params }: { params: { id: strin
                     ))}
                 </div>
 
-                {/* Order Summary Card */}
                 <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.05)] overflow-hidden mb-8">
                     <div className="bg-slate-50 border-b border-slate-100 p-6 md:p-8 flex justify-between items-center">
                         <div>
@@ -129,7 +125,6 @@ export default async function OrderDetailsPage({ params }: { params: { id: strin
                             </div>
                         </div>
 
-                        {/* 🛡️ Fix 4: Address Sanitization/Display Risk reduced by styling */}
                         <div className="flex items-start gap-4">
                             <MapPin className="text-indigo-500 shrink-0 mt-0.5" size={20}/>
                             <div className="max-w-[250px] md:max-w-xs">
@@ -149,7 +144,6 @@ export default async function OrderDetailsPage({ params }: { params: { id: strin
                     </div>
                 </div>
 
-                {/* 🚀 UX Upgrade 2 & 3: Micro Copy & Working Buttons */}
                 <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
                     <p className="text-xs font-medium text-indigo-900 flex items-start gap-2 max-w-xs">
                         <Info size={16} className="text-indigo-500 shrink-0 mt-0.5"/> 
@@ -163,7 +157,6 @@ export default async function OrderDetailsPage({ params }: { params: { id: strin
                                 </button>
                              </Link>
                          ) : (
-                             // 🛡️ Fix 5: Disabled Fake Button instead of broken one
                              <button disabled className="flex-1 md:flex-none flex justify-center items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white px-4 py-2 rounded-lg border border-slate-200 cursor-not-allowed" title="Invoice generation coming soon">
                                  <Download size={14} /> Invoice
                              </button>
@@ -171,7 +164,6 @@ export default async function OrderDetailsPage({ params }: { params: { id: strin
                     </div>
                 </div>
 
-                {/* Navigation Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 w-full">
                     <Link href="/shop" className="flex-1">
                         <button className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl hover:bg-indigo-600 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-xl shadow-slate-900/10 text-sm">
