@@ -48,9 +48,9 @@ export default function ProductCard({
     setIsAdded(true);
     toast.success(`${title} added to cart! 🛒`);
     
-    if (setIsOpen) {
-      setIsOpen(true); 
-    }
+    // if (setIsOpen) {
+    //   setIsOpen(true); 
+    // }
     
     setTimeout(() => setIsAdded(false), 2000);
   };

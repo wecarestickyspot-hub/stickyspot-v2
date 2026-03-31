@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import Navbar from "@/components/shared/Navbar";
 import Link from "next/link";
 import { 
   CheckCircle, ShoppingBag, ArrowRight, Sparkles, 
@@ -9,7 +8,6 @@ import {
   Truck, Package, Info
 } from "lucide-react";
 import OrderEffects from "@/components/order/OrderEffects";
-
 export const dynamic = "force-dynamic"; 
 
 // 🚀 FIX 1: params ko Promise banana zaroori hai Next.js 15 mein
@@ -48,7 +46,6 @@ export default async function OrderDetailsPage({ params }: { params: Promise<{ i
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-sans relative overflow-x-hidden">
-      <Navbar />
 
       <OrderEffects orderId={order.id} status={order.status} />
 

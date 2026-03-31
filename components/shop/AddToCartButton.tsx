@@ -78,8 +78,8 @@ export default function AddToCartButton({ product }: { product: CartProduct }) {
     setIsAdded(true);
     
     // 🧠 ADVANCED UX: Open cart & show success toast
-    if (setIsOpen) setIsOpen(true);
-    toast.success(`${quantity} item(s) added to cart! 🛒`);
+    // if (setIsOpen) setIsOpen(true);
+    // toast.success(`${quantity} item(s) added to cart! 🛒`);
 
     setTimeout(() => {
       setIsAdded(false);
