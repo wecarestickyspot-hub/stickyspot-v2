@@ -6,15 +6,15 @@ import {
   Heading,
   Hr,
   Html,
-  Img,
   Preview,
   Row,
   Section,
   Text,
+  Button,
 } from "@react-email/components";
 import * as React from "react";
 
-// Props ki definition taaki TypeScript khush rahe
+// Props ki definition
 interface OrderItem {
   title: string;
   quantity: number;
@@ -27,19 +27,20 @@ interface OrderEmailProps {
   orderId: string;
   amount: number;
   items: OrderItem[];
+  orderDate?: string;
 }
 
 export default function OrderEmail({
   customerName = "Awesome Customer",
   orderId = "ORD-12345678",
   amount = 499,
+  orderDate = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
   items = [
     { title: "Developer Sticker Pack", quantity: 1, price: 299 },
     { title: "Anime Holographic Sticker", quantity: 2, price: 100 },
   ],
 }: OrderEmailProps) {
-  // Email ke notification preview mein ye text dikhega
-  const previewText = `Your StickySpot order #${orderId.slice(-8).toUpperCase()} is confirmed! 🎉`;
+  const previewText = `🎉 Your StickySpot order #${orderId.slice(-8).toUpperCase()} is confirmed!`;
 
   return (
     <Html>
@@ -47,59 +48,83 @@ export default function OrderEmail({
       <Preview>{previewText}</Preview>
       <Body style={main}>
         <Container style={container}>
-          {/* Header Section */}
+          
+          {/* 🌟 Brand Header */}
           <Section style={header}>
-            <Heading style={headerTitle}>StickySpot</Heading>
+            <Text style={logo}>StickySpot.</Text>
           </Section>
 
-          {/* Greeting & Main Message */}
-          <Section style={messageSection}>
-            <Text style={greeting}>Hi {customerName},</Text>
-            <Text style={message}>
-              Thank you for shopping with us! We've received your order and are getting your awesome stickers ready for shipment. 
+          {/* 🎉 Hero Section */}
+          <Section style={heroSection}>
+            <Heading style={heroTitle}>Order Confirmed!</Heading>
+            <Text style={heroText}>
+              Hi <strong>{customerName}</strong>, thank you for your order. We're getting your premium stickers ready to be shipped.
             </Text>
           </Section>
 
-          <Hr style={divider} />
-
-          {/* Order Summary Summary */}
-          <Section style={orderInfoSection}>
-            <Heading style={h3}>Order Summary</Heading>
-            <Text style={text}>
-              <strong>Order ID:</strong> #{orderId.slice(-8).toUpperCase()} <br />
-              <strong>Total Amount:</strong> ₹{amount}
-            </Text>
+          {/* 🧾 Order Details Card */}
+          <Section style={orderCard}>
+            <Row>
+              <Column>
+                <Text style={cardLabel}>ORDER ID</Text>
+                <Text style={cardValue}>#{orderId.slice(-8).toUpperCase()}</Text>
+              </Column>
+              <Column align="right">
+                <Text style={cardLabel}>ORDER DATE</Text>
+                <Text style={cardValue}>{orderDate}</Text>
+              </Column>
+            </Row>
           </Section>
 
-          {/* Items List */}
-          <Section style={itemsSection}>
-            <Heading style={h3}>Items in your order</Heading>
+          {/* 🛍️ Itemized Receipt */}
+          <Section style={receiptSection}>
+            <Heading style={receiptTitle}>Order Summary</Heading>
+            <Hr style={divider} />
+            
             {items.map((item, index) => (
               <Row key={index} style={itemRow}>
-                <Column>
-                  <Text style={itemTitle}>
-                    {item.quantity}x {item.title}
-                  </Text>
+                <Column style={{ width: "80%" }}>
+                  <Text style={itemTitle}>{item.title}</Text>
+                  <Text style={itemSubtitle}>Qty: {item.quantity}</Text>
                 </Column>
-                <Column align="right">
+                <Column align="right" style={{ width: "20%" }}>
                   <Text style={itemPrice}>₹{item.price * item.quantity}</Text>
                 </Column>
               </Row>
             ))}
+
+            <Hr style={divider} />
+            
+            <Row style={totalRow}>
+              <Column>
+                <Text style={totalLabel}>Total Paid</Text>
+              </Column>
+              <Column align="right">
+                <Text style={totalValue}>₹{amount}</Text>
+              </Column>
+            </Row>
           </Section>
 
-          <Hr style={divider} />
+          {/* 🚀 CTA Button */}
+          <Section style={ctaSection}>
+            <Button style={button} href={`https://stickyspot.in/orders`}>
+              View Your Order
+            </Button>
+          </Section>
 
-          {/* Footer */}
+          <Hr style={footerDivider} />
+
+          {/* 📞 Footer */}
           <Section style={footer}>
             <Text style={footerText}>
-              Need help? Reply to this email or reach out to us at support@stickyspot.in
+              If you have any questions, simply reply to this email or reach out to our support team at <a href="mailto:wecarestickyspot@gmail.com" style={link}>wecarestickyspot@gmail.com</a>.
             </Text>
-            <Text style={footerText}>
+            <Text style={footerSignature}>
               Keep Sticking! ✨<br />
-              The StickySpot Team
+              <span style={{ fontWeight: "bold", color: "#0f172a" }}>The StickySpot Team</span>
             </Text>
           </Section>
+
         </Container>
       </Body>
     </Html>
@@ -107,112 +132,182 @@ export default function OrderEmail({
 }
 
 // ==========================================
-// 🎨 STYLES (Inline styles required for Emails)
+// 🎨 PREMIUM STYLES
 // ==========================================
 
 const main = {
-  backgroundColor: "#f6f9fc",
+  backgroundColor: "#f4f4f5", // Light zinc background
   fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
 };
 
 const container = {
   backgroundColor: "#ffffff",
   margin: "40px auto",
-  padding: "20px 0 48px",
-  borderRadius: "8px",
-  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-  maxWidth: "580px",
+  borderRadius: "16px",
+  boxShadow: "0 4px 24px rgba(0, 0, 0, 0.04)",
+  maxWidth: "600px",
+  overflow: "hidden",
 };
 
 const header = {
-  padding: "0 48px",
+  backgroundColor: "#0f172a", // Slate 900
+  padding: "32px 48px",
   textAlign: "center" as const,
 };
 
-const headerTitle = {
-  color: "#4f46e5", // Indigo-600
+const logo = {
+  color: "#ffffff",
   fontSize: "28px",
-  fontWeight: "bold",
-  margin: "20px 0",
-  letterSpacing: "-0.5px",
+  fontWeight: "900",
+  letterSpacing: "-1px",
+  margin: "0",
 };
 
-const messageSection = {
-  padding: "0 48px",
+const heroSection = {
+  padding: "40px 48px 24px",
+  textAlign: "center" as const,
 };
 
-const greeting = {
-  color: "#333",
-  fontSize: "20px",
-  fontWeight: "bold",
-  marginBottom: "16px",
+const heroTitle = {
+  color: "#10b981", // Emerald 500
+  fontSize: "32px",
+  fontWeight: "800",
+  letterSpacing: "-1px",
+  margin: "0 0 16px",
 };
 
-const message = {
-  color: "#555",
+const heroText = {
+  color: "#475569", // Slate 600
   fontSize: "16px",
-  lineHeight: "24px",
+  lineHeight: "26px",
+  margin: "0",
 };
 
-const orderInfoSection = {
+const orderCard = {
+  backgroundColor: "#f8fafc", // Slate 50
+  margin: "0 48px 32px",
+  padding: "24px",
+  borderRadius: "12px",
+  border: "1px solid #e2e8f0", // Slate 200
+};
+
+const cardLabel = {
+  color: "#64748b", // Slate 500
+  fontSize: "10px",
+  fontWeight: "bold",
+  textTransform: "uppercase" as const,
+  letterSpacing: "1px",
+  margin: "0 0 4px",
+};
+
+const cardValue = {
+  color: "#0f172a", // Slate 900
+  fontSize: "16px",
+  fontWeight: "bold",
+  margin: "0",
+};
+
+const receiptSection = {
   padding: "0 48px",
-  marginTop: "24px",
 };
 
-const itemsSection = {
-  padding: "0 48px",
-  marginTop: "24px",
-  backgroundColor: "#fafafa",
-  borderRadius: "8px",
-  margin: "24px 48px",
-  paddingTop: "16px",
-  paddingBottom: "16px",
-};
-
-const h3 = {
-  color: "#333",
+const receiptTitle = {
+  color: "#0f172a",
   fontSize: "18px",
-  fontWeight: "600",
-  marginBottom: "12px",
-};
-
-const text = {
-  color: "#555",
-  fontSize: "15px",
-  lineHeight: "22px",
+  fontWeight: "bold",
+  margin: "0 0 16px",
 };
 
 const itemRow = {
-  borderBottom: "1px solid #eaeaea",
-  padding: "12px 0",
+  padding: "16px 0",
 };
 
 const itemTitle = {
-  color: "#333",
-  fontSize: "14px",
+  color: "#1e293b", // Slate 800
+  fontSize: "15px",
+  fontWeight: "600",
+  margin: "0 0 4px",
+};
+
+const itemSubtitle = {
+  color: "#64748b",
+  fontSize: "13px",
   margin: "0",
 };
 
 const itemPrice = {
-  color: "#333",
-  fontSize: "14px",
+  color: "#0f172a",
+  fontSize: "15px",
   fontWeight: "bold",
   margin: "0",
 };
 
 const divider = {
-  borderColor: "#eaeaea",
-  margin: "24px 0",
+  borderColor: "#e2e8f0",
+  margin: "12px 0",
+};
+
+const totalRow = {
+  padding: "16px 0",
+};
+
+const totalLabel = {
+  color: "#0f172a",
+  fontSize: "18px",
+  fontWeight: "800",
+  margin: "0",
+};
+
+const totalValue = {
+  color: "#4f46e5", // Indigo 600
+  fontSize: "24px",
+  fontWeight: "900",
+  margin: "0",
+};
+
+const ctaSection = {
+  padding: "32px 48px",
+  textAlign: "center" as const,
+};
+
+const button = {
+  backgroundColor: "#4f46e5", // Indigo 600
+  borderRadius: "8px",
+  color: "#fff",
+  fontSize: "16px",
+  fontWeight: "bold",
+  textDecoration: "none",
+  textAlign: "center" as const,
+  display: "block",
+  padding: "16px 32px",
+};
+
+const footerDivider = {
+  borderColor: "#f1f5f9", // Slate 100
+  margin: "0",
 };
 
 const footer = {
-  padding: "0 48px",
+  backgroundColor: "#f8fafc",
+  padding: "32px 48px",
   textAlign: "center" as const,
 };
 
 const footerText = {
-  color: "#8898aa",
-  fontSize: "12px",
-  lineHeight: "16px",
-  marginTop: "12px",
+  color: "#64748b",
+  fontSize: "13px",
+  lineHeight: "22px",
+  margin: "0 0 24px",
+};
+
+const link = {
+  color: "#4f46e5",
+  textDecoration: "underline",
+};
+
+const footerSignature = {
+  color: "#64748b",
+  fontSize: "14px",
+  lineHeight: "24px",
+  margin: "0",
 };

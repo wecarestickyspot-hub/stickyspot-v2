@@ -84,7 +84,7 @@ export const useCartStore = create<CartStore>()(
           set({ items: [...items, { ...newItem, quantity: quantityToAdd }] });
         }
         
-        set({ isOpen: true });
+        // set({ isOpen: true });
         return { success: true };
       },
 
