@@ -182,23 +182,29 @@ export async function validateCoupon(code: string, cartTotal: number) {
 // 3. STORE & USER SETTINGS
 // ==========================================
 
+// ==========================================
+// 3. STORE & USER SETTINGS
+// ==========================================
+
 export async function updateStoreSettings(formData: FormData) {
   try {
     const adminCheck = await checkAdmin("SUPER_ADMIN");
     if (!adminCheck.authorized) return { error: "Unauthorized" };
 
-    // 🛡️ FIX 1: Safely saari values nikaalo taaki Null error (crash) na aaye
+    // 🛡️ Safely saari values nikaalo
     const thresholdRaw = formData.get("threshold");
     const chargeRaw = formData.get("charge");
     const textRaw = formData.get("text");
-    const themeRaw = formData.get("theme"); // 🚀 Naya Theme field
+    const themeRaw = formData.get("theme");
+    const heroImageRaw = formData.get("heroImage"); // 🚀 NAYA: Hero Image Field nikal liya!
 
-    // 🛡️ FIX 2: Sirf wahi data update karo jo form se aaya hai
+    // 🛡️ Sirf wahi data update karo jo form se aaya hai
     const updateData: any = {};
     if (thresholdRaw !== null) updateData.freeShippingThreshold = z.coerce.number().parse(thresholdRaw);
     if (chargeRaw !== null) updateData.shippingCharge = z.coerce.number().parse(chargeRaw);
     if (textRaw !== null) updateData.announcementText = String(textRaw).slice(0, 100);
-    if (themeRaw !== null) updateData.theme = String(themeRaw); // 👈 Theme save hogi ab!
+    if (themeRaw !== null) updateData.theme = String(themeRaw);
+    if (heroImageRaw !== null) updateData.heroImage = String(heroImageRaw); // 🚀 NAYA: Database mein Image URL bhej diya!
 
     await prisma.storeSettings.upsert({
       where: { id: "global_settings" },
@@ -207,14 +213,16 @@ export async function updateStoreSettings(formData: FormData) {
         id: "global_settings", 
         freeShippingThreshold: 499, 
         shippingCharge: 49,
-        theme: themeRaw ? String(themeRaw) : "Premium Light" // Default theme
+        theme: themeRaw ? String(themeRaw) : "Premium Light",
+        heroImage: heroImageRaw ? String(heroImageRaw) : null // Default null agar create ho raha ho
       }
     });
 
     revalidatePath("/", "layout");
+    revalidatePath("/"); // 🚀 Home page ka cache turant clear karne ke liye
+    
     return { success: true };
   } catch (error: any) { 
-    // 🛡️ FIX 3: Asli error console mein dikhega ab
     console.error("❌ Settings Update Error:", error);
     return { error: "Settings failed: " + error.message }; 
   }
