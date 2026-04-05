@@ -57,7 +57,9 @@ export default function CartDrawer() {
   const progressPercentage = Math.round(Math.min(100, (subtotal / safeThreshold) * 100));
 
   const shipping = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : shippingCharge;
-  const totalToPay = (finalTotal || 0) + (shipping || 0);
+  
+  // 🚀 BUG FIX: Direct aur Exact Calculation (No Double Shipping)
+  const totalToPay = Math.max(0, subtotal - usedDiscount) + shipping;
 
   // 🤫 Silent Coupon Revalidation
   useEffect(() => {

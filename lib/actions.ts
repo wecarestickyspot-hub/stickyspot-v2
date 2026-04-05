@@ -55,6 +55,10 @@ async function checkAdmin(requiredRole: "ADMIN" | "SUPER_ADMIN" | "SUPPORT" = "A
 // 1. PRODUCT ENGINE
 // ==========================================
 
+// ==========================================
+// 1. PRODUCT ENGINE
+// ==========================================
+
 export async function createProduct(formData: FormData) {
   try {
     const adminCheck = await checkAdmin("ADMIN");
@@ -65,20 +69,32 @@ export async function createProduct(formData: FormData) {
     const stock = z.coerce.number().int().nonnegative().parse(formData.get("stock"));
     const images = imageArraySchema.parse(JSON.parse(formData.get("images") as string));
 
+    // 🚀 FIX: MRP (Original Price) ko form se nikalo
+    const originalPriceRaw = formData.get("originalPrice");
+    const originalPrice = originalPriceRaw ? Number(originalPriceRaw) : null;
+
     const slug = `${generateSlug(title)}-${nanoid(6)}`;
 
     await prisma.product.create({
       data: {
-        title, price, images, slug, stock,
+        title, 
+        price, 
+        originalPrice, // 👈 NAYA: Ab MRP bhi database mein jayega!
+        images, 
+        slug, 
+        stock,
         category: z.string().parse(formData.get("category")),
         description: (formData.get("description") as string).replace(/<[^>]*>?/gm, "").slice(0, 2000),
         status: (formData.get("status") as any) || "ACTIVE"
       },
     });
 
-    revalidatePath("/admin/products"); revalidatePath("/shop");
+    revalidatePath("/admin/products"); 
+    revalidatePath("/shop");
     return { success: true, message: "Product Created! 🎉" };
-  } catch (error) { return { success: false, message: "Error creating product" }; }
+  } catch (error) { 
+    return { success: false, message: "Error creating product" }; 
+  }
 }
 
 export async function updateProduct(id: string, formData: FormData) {
