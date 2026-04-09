@@ -2,8 +2,9 @@ import ProductCard from "@/components/shop/ProductCard";
 import ShopFilters from "@/components/shop/ShopFilters"; 
 import ShopShippingBar from "@/components/shop/ShopShippingBar";
 import { BundleCard } from "@/components/shop/BundleCard";
+import Pagination from "@/components/shared/Pagination"; // 🚀 NAYA: Fast Pagination Import
 import { prisma } from "@/lib/prisma";
-import { PackageOpen, Sparkles, Layers, ChevronLeft, ChevronRight, BadgeCheck, Package, Zap } from "lucide-react";
+import { PackageOpen, Sparkles, Layers, BadgeCheck, Package, Zap } from "lucide-react";
 import Link from "next/link";
 import { Metadata } from "next";
 
@@ -70,7 +71,6 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
     default: orderBy.createdAt = "desc";
   }
 
-  // 🚀 CLEAN & FAST: Removed currentUser and slow queries from here
   const [products, totalProducts, bundles, categoriesData] = await Promise.all([
     prisma.product.findMany({
       where,
@@ -128,12 +128,10 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {/* 🚀 FIX: Reduced top padding on mobile (pt-24 to pt-16) */}
       <div className="relative z-20 pt-16 lg:pt-8">
         <ShopShippingBar />
       </div>
 
-      {/* 🚀 FIX: Reduced top padding (py-12 to py-6 lg:py-12) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-12 relative z-10">
         
         {/* 🏷️ Header */}
@@ -204,36 +202,14 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
                         image={product.images?.[0] ?? "/placeholder.png"}
                         category={product.category}
                         stock={product.stock}
-                        // 🚀 NAYA FIX: ISO String Taki error na aaye aur Client Component theek se padhe
                         createdAt={product.createdAt.toISOString()}
-                        // Yaha 'hideWishlist' pass NAHI kar rahe, toh iska matlab Wishlist ka icon is page par dikhega!
                       />
                     </div>
                   ))}
                 </div>
 
-                {/* 🎯 PAGINATION */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-2 sm:gap-3 mt-16 sm:mt-24">
-                    <Link
-                      href={`/shop?${new URLSearchParams({ category: category || '', search: search || '', sort: sort || '', page: Math.max(1, currentPage - 1).toString() })}`}
-                      className={`h-12 sm:h-14 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-black flex items-center gap-1 sm:gap-2 border transition-all ${currentPage === 1 ? 'opacity-30 pointer-events-none border-slate-100 bg-slate-50 text-slate-300' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-500 hover:text-indigo-600'}`}
-                    >
-                      <ChevronLeft size={18} strokeWidth={3} /> <span className="hidden sm:inline">PREV</span>
-                    </Link>
-
-                    <div className="h-12 sm:h-14 px-6 sm:px-8 rounded-xl sm:rounded-2xl bg-slate-900 text-white font-black flex items-center shadow-lg shadow-slate-200 text-sm sm:text-base">
-                      {currentPage} <span className="mx-2 opacity-30">/</span> {totalPages}
-                    </div>
-
-                    <Link
-                      href={`/shop?${new URLSearchParams({ category: category || '', search: search || '', sort: sort || '', page: Math.min(totalPages, currentPage + 1).toString() })}`}
-                      className={`h-12 sm:h-14 px-4 sm:px-6 rounded-xl sm:rounded-2xl font-black flex items-center gap-1 sm:gap-2 border transition-all ${currentPage === totalPages ? 'opacity-30 pointer-events-none border-slate-100 bg-slate-50 text-slate-300' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-500 hover:text-indigo-600'}`}
-                    >
-                      <span className="hidden sm:inline">NEXT</span> <ChevronRight size={18} strokeWidth={3} />
-                    </Link>
-                  </div>
-                )}
+                {/* 🎯 NAYA: FAST PAGINATION COMPONENT */}
+                <Pagination totalPages={totalPages} currentPage={currentPage} />
               </>
             )}
           </div>

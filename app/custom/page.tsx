@@ -1,17 +1,19 @@
 "use client";
 
 import { useCartStore } from "@/store/useCartStore";
-import { UploadCloud, Check, Sparkles, Loader2, AlertCircle, ShoppingCart, RefreshCw, ShieldCheck, Printer, Droplets } from "lucide-react";
+import { UploadCloud, Check, Sparkles, Loader2, AlertCircle, ShoppingCart, RefreshCw, ShieldCheck, Printer, Droplets, Wrench } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
-// ⚠️ Note: Moving to signed uploads (/api/upload-signature) is required for backend security.
 const CLOUD_NAME = "diudtqcqp";
 
 export default function CustomPage() {
-  // 🧠 FIX 8: Get setIsOpen to auto-open cart after adding
   const { addItem, setIsOpen } = useCartStore();
+
+  // 🛑 MAIN SWITCH: Jab testing poori ho jaye, isko 'true' kar dena!
+  const IS_CUSTOM_ACTIVE = false;
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -28,7 +30,6 @@ export default function CustomPage() {
 
   const selectedPack = packs.find(p => p.id === selectedPackId)!;
 
-  // 🧠 FIX 3: Memory Leak Cleanup (On Unmount)
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -36,6 +37,8 @@ export default function CustomPage() {
   }, [previewUrl]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!IS_CUSTOM_ACTIVE) return; // Extra security
+
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -46,12 +49,9 @@ export default function CustomPage() {
       return toast.error("File is too large. Max size is 5MB.");
     }
 
-    // 🧠 FIX 3: Immediate cleanup of old object URL before creating a new one
     if (previewUrl) URL.revokeObjectURL(previewUrl);
-
     const objectUrl = URL.createObjectURL(file);
 
-    // 🧠 FIX 5: Advanced Dimension Validation for Print Quality
     const img = new window.Image();
     img.src = objectUrl;
     img.onload = () => {
@@ -60,7 +60,6 @@ export default function CustomPage() {
         URL.revokeObjectURL(objectUrl);
         return;
       }
-      // If validation passes, set states
       setImageFile(file);
       setPreviewUrl(objectUrl);
       setUploadedUrl(null); 
@@ -68,13 +67,12 @@ export default function CustomPage() {
   };
 
   const uploadToCloudinary = async () => {
-    if (!imageFile) return;
+    if (!IS_CUSTOM_ACTIVE || !imageFile) return;
 
     setIsUploading(true);
     const toastId = toast.loading("Processing your masterpiece securely...");
 
     try {
-      // 🛡️ Step 1: Get the secure signature from our backend
       const sigRes = await fetch('/api/upload-signature', { method: 'POST' });
       if (!sigRes.ok) {
          if (sigRes.status === 429) throw new Error("Too many attempts. Please wait a minute.");
@@ -82,7 +80,6 @@ export default function CustomPage() {
       }
       const { signature, timestamp, folder, eager, apiKey } = await sigRes.json();
 
-      // 📦 Step 2: Build FormData EXACTLY matching the signed parameters
       const formData = new FormData();
       formData.append("file", imageFile);
       formData.append("api_key", apiKey);
@@ -90,9 +87,7 @@ export default function CustomPage() {
       formData.append("signature", signature);
       formData.append("folder", folder);
       formData.append("eager", eager);
-      // ❌ REMOVED: formData.append("upload_preset", ...)
 
-      // 🚀 Step 3: Upload directly to Cloudinary
       const uploadRes = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
         { method: "POST", body: formData }
@@ -124,6 +119,7 @@ export default function CustomPage() {
   };
 
   const handleAddToCart = () => {
+    if (!IS_CUSTOM_ACTIVE) return; // Prevent action
     if (!uploadedUrl) return toast.error("Please upload and confirm your design first!");
 
     const customId = `custom-${Date.now()}`;
@@ -131,17 +127,17 @@ export default function CustomPage() {
     addItem({
       id: customId,
       title: `Custom Stickers (Pack of ${selectedPack.qty})`,
-      slug: customId, // 🧠 FIX 9: Tiny Optimization
+      slug: customId,
       price: selectedPack.price,
       image: uploadedUrl,
       quantity: 1,
       category: "Custom",
-      stock: 999, // Fake frontend stock for now (Backend will handle real capacity)
+      stock: 999,
     });
 
     toast.success("Custom Pack added to Cart! 🛒");
     resetUpload();
-    setIsOpen(true); // 🧠 FIX 8: Auto-open Cart Drawer for better flow
+    setIsOpen(true); 
   };
 
   return (
@@ -165,10 +161,31 @@ export default function CustomPage() {
             </p>
           </div>
 
+          {/* 🎯 THE PSYCHOLOGY ALERT BOX */}
+          {!IS_CUSTOM_ACTIVE && (
+            <div className="bg-indigo-50 border-2 border-indigo-200 p-5 rounded-2xl flex items-start gap-4 animate-in zoom-in">
+              <div className="bg-indigo-100 p-3 rounded-xl shrink-0">
+                 <Wrench className="text-indigo-600" size={24} />
+              </div>
+              <div>
+                <h3 className="font-black text-indigo-900 text-lg">Machines Upgrading! 🚀</h3>
+                <p className="text-indigo-700 text-sm mt-1 font-medium leading-relaxed">
+                  Due to overwhelming demand, we are upgrading our custom printing machines to deliver even higher quality (8K Resolution) prints! 
+                  Custom orders will resume shortly.
+                </p>
+                <Link href="/shop" className="inline-block mt-3 text-sm font-bold text-indigo-600 hover:text-indigo-800 underline underline-offset-4">
+                  Checkout our pre-made collection meanwhile &rarr;
+                </Link>
+              </div>
+            </div>
+          )}
+
           {/* Upload Box */}
-          <div className="relative w-full aspect-square md:aspect-video rounded-[3rem] border-2 border-dashed border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col items-center justify-center group">
+          <div className={`relative w-full aspect-square md:aspect-video rounded-[3rem] border-2 border-dashed overflow-hidden flex flex-col items-center justify-center transition-all duration-500 ${
+            IS_CUSTOM_ACTIVE ? "border-slate-200 bg-white group hover:border-indigo-300" : "border-slate-200 bg-slate-100 opacity-60 cursor-not-allowed grayscale-[30%]"
+          }`}>
             
-            {!previewUrl && (
+            {IS_CUSTOM_ACTIVE && !previewUrl && (
                 <input 
                   type="file" 
                   accept="image/png, image/jpeg, image/webp" 
@@ -177,7 +194,16 @@ export default function CustomPage() {
                 />
             )}
 
-            {previewUrl ? (
+            {!IS_CUSTOM_ACTIVE ? (
+              <div className="text-center p-6 flex flex-col items-center">
+                <div className="w-20 h-20 bg-slate-200 rounded-full flex items-center justify-center mb-4 text-slate-400">
+                  <UploadCloud size={32} strokeWidth={2} />
+                </div>
+                <h3 className="text-xl font-black text-slate-500 mb-1">Temporarily Paused</h3>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Check back soon</p>
+              </div>
+            ) : previewUrl ? (
+              // ... Preview UI (Visible only when Active) ...
               <div className="relative w-full h-full p-6 flex flex-col items-center justify-center">
                 <div className="relative w-full flex-1">
                     <Image src={previewUrl} alt="Preview" fill className="object-contain p-6 drop-shadow-2xl" />
@@ -197,6 +223,7 @@ export default function CustomPage() {
                 )}
               </div>
             ) : (
+              // ... Upload UI (Visible only when Active) ...
               <div className="text-center p-6 transition-transform group-hover:scale-110 duration-500">
                 <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6 text-indigo-500 shadow-inner group-hover:bg-indigo-600 group-hover:text-white transition-all">
                   <UploadCloud size={44} strokeWidth={1.5} />
@@ -207,8 +234,8 @@ export default function CustomPage() {
             )}
           </div>
 
-          {/* Controls & Confirmation */}
-          {previewUrl && !uploadedUrl && !isUploading && (
+          {/* Controls & Confirmation (Hidden if disabled) */}
+          {IS_CUSTOM_ACTIVE && previewUrl && !uploadedUrl && !isUploading && (
               <div className="flex gap-4">
                   <button onClick={resetUpload} className="px-6 py-3 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors flex items-center gap-2">
                       <RefreshCw size={16} /> Change
@@ -219,13 +246,7 @@ export default function CustomPage() {
               </div>
           )}
 
-          {uploadedUrl && (
-              <button onClick={resetUpload} className="text-sm font-bold text-slate-400 hover:text-rose-500 flex items-center gap-2 transition-colors">
-                  <RefreshCw size={14} /> Start over with a new design
-              </button>
-          )}
-
-          {/* 🧠 FIX 4: UX Psychology Trust Badges */}
+          {/* Trust Badges */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-200/60">
              <div className="flex flex-col items-center text-center gap-2 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
                 <Printer className="text-indigo-500" size={24} />
@@ -249,15 +270,15 @@ export default function CustomPage() {
              <span className="bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-emerald-100">Most Popular</span>
            </h2>
 
-           <div className="space-y-4 mb-10">
+           <div className={`space-y-4 mb-10 ${!IS_CUSTOM_ACTIVE ? 'opacity-50 pointer-events-none grayscale-[20%]' : ''}`}>
              {packs.map((pack) => (
                <div 
                  key={pack.id}
-                 onClick={() => setSelectedPackId(pack.id)}
-                 className={`relative p-6 rounded-2xl border-2 cursor-pointer transition-all flex justify-between items-center group
+                 onClick={() => IS_CUSTOM_ACTIVE && setSelectedPackId(pack.id)}
+                 className={`relative p-6 rounded-2xl border-2 transition-all flex justify-between items-center group
                    ${selectedPackId === pack.id 
                      ? 'bg-indigo-50 border-indigo-500 shadow-md' 
-                     : 'bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50'
+                     : 'bg-white border-slate-100'
                    }`}
                >
                  <div>
@@ -286,24 +307,28 @@ export default function CustomPage() {
            <div className="border-t border-slate-100 pt-8">
               <div className="flex justify-between items-end mb-8">
                  <span className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Total Price</span>
-                 <span className="text-5xl font-black text-slate-900 tracking-tighter">₹{selectedPack.price}</span>
+                 <span className={`text-5xl font-black tracking-tighter ${!IS_CUSTOM_ACTIVE ? 'text-slate-300' : 'text-slate-900'}`}>₹{selectedPack.price}</span>
               </div>
 
               <button
                 onClick={handleAddToCart}
-                disabled={isUploading || !uploadedUrl}
-                className={`w-full py-5 rounded-2xl font-black text-lg shadow-xl transition-all flex items-center justify-center gap-3 active:scale-95
-                  ${isUploading || !uploadedUrl
+                disabled={!IS_CUSTOM_ACTIVE || isUploading || !uploadedUrl}
+                className={`w-full py-5 rounded-2xl font-black text-lg shadow-xl transition-all flex items-center justify-center gap-3 
+                  ${!IS_CUSTOM_ACTIVE
                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-                    : 'bg-slate-900 text-white hover:bg-indigo-600 shadow-slate-900/10 group'
+                    : isUploading || !uploadedUrl
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                      : 'bg-slate-900 text-white hover:bg-indigo-600 shadow-slate-900/10 active:scale-95'
                   }`}
               >
-                {isUploading ? (
+                {!IS_CUSTOM_ACTIVE ? (
+                  <>Currently Unavailable</>
+                ) : isUploading ? (
                   <><Loader2 className="animate-spin" size={20} /> Processing...</>
                 ) : !uploadedUrl ? (
                   <>Confirm Design First</>
                 ) : (
-                  <><ShoppingCart size={20} className="group-hover:-translate-y-1 transition-transform" /> Add to Cart</>
+                  <><ShoppingCart size={20} /> Add to Cart</>
                 )}
               </button>
            </div>
