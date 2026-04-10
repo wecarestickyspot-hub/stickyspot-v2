@@ -6,15 +6,17 @@ import toast from "react-hot-toast";
 import CldImage from "@/components/shared/CldImage"; 
 import { useState } from "react";
 
+// 🚀 FIX: TypeScript interfaces theek kiye
 interface ProductDetails {
+  id: string;
   images: string[] | string;
+  stock: number;
+  price: number;
 }
 
 interface BundleProduct {
   id: string;
-  stock: number;
-  price: number;
-  product?: ProductDetails; // 🚀 NAYA: Prisma se nested product ka data aayega
+  product?: ProductDetails; 
 }
 
 interface Bundle {
@@ -32,20 +34,19 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
 
-  // 🧠 REAL ECOMMERCE LOGIC: Calculate max available stock for this bundle
+  // 🧠 FIX: Ab hum 'p.product?.stock' read kar rahe hain
   const minAvailableStock = bundle.products?.length > 0 
-    ? Math.min(...bundle.products.map((p) => p.stock || 0)) 
+    ? Math.min(...bundle.products.map((p) => p.product?.stock || 0)) 
     : 0;
 
-  // Calculate Original Price (Sum of individual product prices)
-  const originalPrice = bundle.products?.reduce((acc, curr) => acc + (curr.price || 0), 0) || 0;
+  // 🧠 FIX: Ab hum 'p.product?.price' read kar rahe hain
+  const originalPrice = bundle.products?.reduce((acc, curr) => acc + (curr.product?.price || 0), 0) || 0;
   const savings = originalPrice - bundle.price;
 
   // Check how many of this bundle are already in the cart
   const existingBundleInCart = items.find((item) => item.id === bundle.id);
   const existingQuantity = existingBundleInCart?.quantity || 0;
   
-  // The actual number the user is allowed to add
   const maxAddable = minAvailableStock - existingQuantity;
   const isOutOfStock = minAvailableStock <= 0;
 
@@ -70,7 +71,8 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
       slug: bundle.slug,
       quantity: 1, 
       isBundle: true, 
-      bundleProductIds: bundle.products.map(p => p.id), 
+      // 🚀 FIX: 'p.product.id' checkout logic ke liye
+      bundleProductIds: bundle.products.map(p => p.product?.id || ""), 
       stock: minAvailableStock, 
       category: "Bundle" 
     });
@@ -89,6 +91,8 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
     <div className={`group relative bg-[#0F0F0F] border border-white/10 rounded-3xl overflow-hidden transition-all duration-500 flex flex-col h-full
       ${isOutOfStock ? "opacity-70 grayscale-[30%]" : "hover:border-indigo-500/50"}
     `}>
+      {/* ... BAAKI KA POORA UI CODE SAME RAHEGA (Badge, Image Wrap, etc.) ... */}
+      
       {/* Badge */}
       {!isOutOfStock && (
         <div className="absolute top-4 right-4 z-10 bg-indigo-600 text-white text-[10px] font-black tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
@@ -109,7 +113,6 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
         {/* Overlay with included product icons */}
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/80 to-transparent flex gap-2">
            {bundle.products?.slice(0, 4).map((p, index) => {
-             // 🚀 THE FIX: Nested `product.images` ko theek se nikalna
              const nestedImages = p.product?.images;
              const imgSrc = Array.isArray(nestedImages) ? nestedImages[0] : (nestedImages || "/placeholder.png");
              

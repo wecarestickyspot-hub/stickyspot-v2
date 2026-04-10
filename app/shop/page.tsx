@@ -97,7 +97,8 @@ export default async function ShopPage(props: { searchParams: SearchParams }) {
         products: { 
           include: { 
              product: { 
-               select: { images: true } 
+               // 🚀 THE FIX: Yahan images ke sath stock, price aur id add kar diya gaya hai!
+               select: { images: true, stock: true, price: true, id: true } 
              }
           }
         } 
