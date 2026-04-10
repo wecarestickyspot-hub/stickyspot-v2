@@ -6,11 +6,15 @@ import toast from "react-hot-toast";
 import CldImage from "@/components/shared/CldImage"; 
 import { useState } from "react";
 
+interface ProductDetails {
+  images: string[] | string;
+}
+
 interface BundleProduct {
   id: string;
-  images: string[] | string; // 🛡️ Safely handle both string or array
   stock: number;
   price: number;
+  product?: ProductDetails; // 🚀 NAYA: Prisma se nested product ka data aayega
 }
 
 interface Bundle {
@@ -43,7 +47,7 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
   
   // The actual number the user is allowed to add
   const maxAddable = minAvailableStock - existingQuantity;
-  const isOutOfStock = minAvailableStock === 0;
+  const isOutOfStock = minAvailableStock <= 0;
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -66,7 +70,6 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
       slug: bundle.slug,
       quantity: 1, 
       isBundle: true, 
-      // 🚀 FIX 1: Send the product IDs to the cart so checkout knows what to deduct!
       bundleProductIds: bundle.products.map(p => p.id), 
       stock: minAvailableStock, 
       category: "Bundle" 
@@ -83,11 +86,15 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
   };
 
   return (
-    <div className="group relative bg-[#0F0F0F] border border-white/10 rounded-3xl overflow-hidden hover:border-indigo-500/50 transition-all duration-500 flex flex-col h-full">
+    <div className={`group relative bg-[#0F0F0F] border border-white/10 rounded-3xl overflow-hidden transition-all duration-500 flex flex-col h-full
+      ${isOutOfStock ? "opacity-70 grayscale-[30%]" : "hover:border-indigo-500/50"}
+    `}>
       {/* Badge */}
-      <div className="absolute top-4 right-4 z-10 bg-indigo-600 text-white text-[10px] font-black tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
-        <Sparkles size={12} className="animate-pulse" /> VALUE PACK
-      </div>
+      {!isOutOfStock && (
+        <div className="absolute top-4 right-4 z-10 bg-indigo-600 text-white text-[10px] font-black tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
+          <Sparkles size={12} className="animate-pulse" /> VALUE PACK
+        </div>
+      )}
 
       {/* Image Wrap */}
       <div className="relative aspect-[4/3] overflow-hidden bg-gray-900 shrink-0">
@@ -96,23 +103,24 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
           alt={bundle.title} 
           fill 
           sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-cover group-hover:scale-110 transition-transform duration-700" 
+          className={`object-cover transition-transform duration-700 ${!isOutOfStock && "group-hover:scale-110"}`} 
         />
         
         {/* Overlay with included product icons */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent flex gap-2">
-           {bundle.products?.slice(0, 4).map((p) => {
-             // 🛡️ FIX 2: Safely extract image whether it's an array or string
-             const imgSrc = Array.isArray(p.images) ? p.images[0] : (p.images || "/placeholder.png");
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/80 to-transparent flex gap-2">
+           {bundle.products?.slice(0, 4).map((p, index) => {
+             // 🚀 THE FIX: Nested `product.images` ko theek se nikalna
+             const nestedImages = p.product?.images;
+             const imgSrc = Array.isArray(nestedImages) ? nestedImages[0] : (nestedImages || "/placeholder.png");
              
              return (
-               <div key={p.id} className="w-8 h-8 rounded-full border border-white/20 bg-black/50 overflow-hidden relative shadow-sm">
-                  <CldImage src={imgSrc} alt="Product" fill className="object-cover" />
+               <div key={p.id || index} className="w-10 h-10 rounded-full border-2 border-white/20 bg-white/10 overflow-hidden relative shadow-md backdrop-blur-sm -ml-2 first:ml-0">
+                  <CldImage src={imgSrc} alt="Product sticker" fill className="object-cover" />
                </div>
              )
            })}
            {bundle.products?.length > 4 && (
-             <div className="w-8 h-8 rounded-full border border-white/20 bg-black/80 flex items-center justify-center text-[10px] font-bold text-white shadow-sm">
+             <div className="w-10 h-10 rounded-full border-2 border-white/20 bg-indigo-600/90 flex items-center justify-center text-[11px] font-black text-white shadow-md backdrop-blur-sm -ml-2">
                +{bundle.products.length - 4}
              </div>
            )}
@@ -128,10 +136,11 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
         </p>
 
         {/* Bottom Action Area */}
-        <div className="mt-auto">
+        <div className="mt-auto border-t border-white/10 pt-4">
+          
           {/* 💰 CONVERSION HACK: Show Savings */}
           {savings > 0 && !isOutOfStock && (
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-3">
               <span className="text-xs text-gray-500 line-through font-medium">₹{originalPrice}</span>
               <span className="text-xs text-emerald-400 font-bold bg-emerald-400/10 px-2 py-0.5 rounded-md">Save ₹{savings}</span>
             </div>
@@ -140,7 +149,7 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
           <div className="flex items-end justify-between">
             <div>
               <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-0.5">Bundle Price</p>
-              <p className="text-2xl font-black text-white">₹{bundle.price}</p>
+              <p className="text-3xl font-black text-white">₹{bundle.price}</p>
             </div>
             
             <button 
@@ -170,14 +179,14 @@ export function BundleCard({ bundle }: { bundle: Bundle }) {
         
         {/* 💰 CONVERSION HACK: Urgency */}
         {minAvailableStock <= 3 && minAvailableStock > 0 && (
-          <p className="text-[10px] text-rose-500 font-bold mt-4 uppercase tracking-widest animate-pulse">
+          <p className="text-[10px] text-rose-500 font-bold mt-4 uppercase tracking-widest animate-pulse text-center bg-rose-500/10 py-1.5 rounded-lg">
             🔥 Limited stock! Only {minAvailableStock} bundles left.
           </p>
         )}
         
         {isOutOfStock && (
-          <p className="text-[10px] text-white/40 font-bold mt-4 uppercase tracking-widest text-center">
-            Out of Stock
+          <p className="text-xs text-rose-500 font-bold mt-4 uppercase tracking-widest text-center bg-rose-500/10 py-2 rounded-lg border border-rose-500/20">
+            Currently Out of Stock
           </p>
         )}
       </div>
