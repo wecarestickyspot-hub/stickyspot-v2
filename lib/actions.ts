@@ -261,6 +261,10 @@ export async function setUserRole(userId: string, role: string) {
 // 4. BUNDLES, REVIEWS & WISHLIST
 // ==========================================
 
+// ==========================================
+// 4. BUNDLES, REVIEWS & WISHLIST
+// ==========================================
+
 export async function createBundle(formData: FormData) {
   try {
     const adminCheck = await checkAdmin("ADMIN");
@@ -285,7 +289,14 @@ export async function createBundle(formData: FormData) {
         description,
         image,
         slug,
-        products: { connect: productIds.map(id => ({ id })) } // Prisma syntax to connect M2M
+        // 🚀 THE FIX: Explicit Many-to-Many relation creation
+        products: {
+          create: productIds.map((id) => ({
+            product: {
+              connect: { id: id }
+            }
+          }))
+        }
       }
     });
 
