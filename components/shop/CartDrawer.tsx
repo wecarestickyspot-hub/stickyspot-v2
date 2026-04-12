@@ -1,7 +1,7 @@
 "use client";
 
 import { useCartStore } from "@/store/useCartStore";
-import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight, ShieldCheck, Tag, Loader2, Check } from "lucide-react";
+import { X, Plus, Minus, Trash2, ShoppingBag, ArrowRight, ShieldCheck, Tag, Loader2, Check, AlertCircle } from "lucide-react";
 import { useEffect, useState, useTransition, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { validateCoupon } from "@/lib/actions";
@@ -60,6 +60,12 @@ export default function CartDrawer() {
   
   // 🚀 BUG FIX: Direct aur Exact Calculation (No Double Shipping)
   const totalToPay = Math.max(0, subtotal - usedDiscount) + shipping;
+
+  // 🚀 NAYA: Minimum Order Value (MOV) Logic
+  const MIN_ORDER_VALUE = 245;
+  const amountShortForCheckout = Math.max(0, MIN_ORDER_VALUE - subtotal);
+  // Checkout block hoga agar cart khali ho YA minimum order value meet na ho rahi ho
+  const isCheckoutBlocked = items.length === 0 || amountShortForCheckout > 0;
 
   // 🤫 Silent Coupon Revalidation
   useEffect(() => {
@@ -239,7 +245,7 @@ export default function CartDrawer() {
                 ))}
               </div>
 
-              {/* 🎟️ Coupon Section */}
+              {/* Promo Code */}
               <div className="pt-6 border-t border-slate-100 mt-6">
                 <label className="text-xs text-slate-400 uppercase font-black tracking-widest mb-3 block">Promo Code</label>
 
@@ -285,6 +291,18 @@ export default function CartDrawer() {
         {/* 🧾 Footer / Checkout Area */}
         {items.length > 0 && (
           <div className="p-6 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.03)] shrink-0 z-20">
+            
+            {/* 🎯 NAYA: The Upsell Warning Box */}
+            {amountShortForCheckout > 0 && (
+              <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl mb-4 flex items-start gap-2 animate-in slide-in-from-bottom-2">
+                <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={16} />
+                <div>
+                  <p className="text-amber-800 text-xs font-bold">Minimum Order Value is ₹{MIN_ORDER_VALUE}</p>
+                  <p className="text-amber-700 text-[11px] mt-0.5 font-medium">Please add items worth ₹{amountShortForCheckout.toFixed(0)} more to proceed.</p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2 mb-4 text-sm font-medium text-slate-500">
               <div className="flex justify-between items-center">
                 <span>Subtotal</span>
@@ -320,11 +338,18 @@ export default function CartDrawer() {
             </div>
 
             <button
-              disabled={items.length === 0}
+              disabled={isCheckoutBlocked}
               onClick={() => { setIsOpen(false); router.push("/checkout"); }}
-              className="w-full bg-slate-900 text-white font-bold text-lg py-4 rounded-full hover:bg-indigo-600 transition-all active:scale-95 shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`w-full font-bold text-lg py-4 rounded-full transition-all flex items-center justify-center gap-2 group 
+                ${isCheckoutBlocked 
+                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200' 
+                  : 'bg-slate-900 text-white hover:bg-indigo-600 active:scale-95 shadow-lg shadow-slate-900/10'
+                }`}
             >
-              Checkout <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              {amountShortForCheckout > 0 
+                ? `Add ₹${amountShortForCheckout.toFixed(0)} more`
+                : <>Checkout <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></>
+              }
             </button>
 
             <div className="flex items-center justify-center gap-1.5 mt-4 text-[10px] font-black tracking-widest uppercase text-slate-400">
