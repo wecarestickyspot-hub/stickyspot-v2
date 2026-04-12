@@ -1,4 +1,5 @@
 "use client";
+
 import { useCartStore } from '@/store/useCartStore';
 import { ShieldCheck, Lock, ArrowRight, Sparkles, MapPin, User, Mail, ShoppingBag, Tag, CreditCard, Banknote, Loader2, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -15,11 +16,26 @@ declare global {
 }
 
 export default function CheckoutPage() {
-  const { items, discount, couponCode, freeShippingThreshold, shippingCharge } = useCartStore();
+  // 🚀 FIX: getCartTotal import kiya route guard ke liye
+  const { items, discount, couponCode, freeShippingThreshold, shippingCharge, getCartTotal } = useCartStore();
   const router = useRouter();
   
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // 🛡️ THE IRON DOOR (Route Guard Logic)
+  useEffect(() => {
+    if (!mounted) return;
+
+    const { subtotal } = getCartTotal();
+    const MIN_ORDER_VALUE = 245;
+
+    // Agar cart mein item hai par MOV meet nahi ho raha, toh bhaga do
+    if (items.length > 0 && subtotal < MIN_ORDER_VALUE) {
+      toast.error(`Minimum order value is ₹${MIN_ORDER_VALUE}. Nice try though! 😉`);
+      router.replace("/shop");
+    }
+  }, [mounted, items, getCartTotal, router]);
 
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', address: '', city: '', pincode: '', state: ''
@@ -30,11 +46,15 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [userEnteredOtp, setUserEnteredOtp] = useState("");
-  // generatedOtp state is REMOVED. Only server knows the OTP now.
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // 1. Wait for hydration
   if (!mounted) return null;
 
+  // 2. 🛡️ IRON DOOR ENFORCEMENT: Jab tak redirect na ho, UI mat dikhao
+  if (items.length > 0 && getCartTotal().subtotal < 245) return null;
+
+  // 3. Empty Cart UI
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center font-sans px-4 relative overflow-hidden text-center">
