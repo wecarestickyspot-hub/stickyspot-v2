@@ -40,7 +40,7 @@ export default function StickyCartBar({ product }: { product: Product }) {
 
         {/* Add to Cart */}
         <div className="shrink-0 w-44">
-          <AddToCartButton product={product} compact />
+          <AddToCartButton product={product}/>
         </div>
       </div>
 
