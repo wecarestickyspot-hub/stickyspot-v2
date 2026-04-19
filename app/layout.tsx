@@ -4,7 +4,7 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "react-hot-toast"; 
 import Footer from "@/components/shared/Footer";
-import ThemeEngine from "@/components/shared/ThemeEngine";
+import ThemeEngine, { ThemeType } from "@/components/shared/ThemeEngine";
 import { prisma } from "@/lib/prisma"; 
 import StoreInitializer from "@/components/shared/StoreInitializer"; 
 import AnnouncementBar from "@/components/shared/AnnouncementBar";
@@ -86,7 +86,7 @@ export default async function RootLayout({
           <AnnouncementBar />
 
           <StoreInitializer threshold={freeShippingThreshold} charge={shippingCharge} />
-          <ThemeEngine activeTheme={activeTheme} />
+          <ThemeEngine activeTheme={(activeTheme ?? "default") as "auto" | ThemeType} />
           
           <Toaster 
             position="bottom-center"
