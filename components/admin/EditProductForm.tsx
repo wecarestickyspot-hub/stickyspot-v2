@@ -64,10 +64,8 @@ export default function EditProductForm({ product }: { product: Product }) {
 
         if (result?.success) {
           toast.success(result.message || "Product Updated Successfully! 🎉");
-          // 🚀 THE MAGIC FIX: Pushes user back to the exact page they came from (e.g., Page 2)
           router.back(); 
         } else {
-          // Displaying structured server errors if any
           toast.error(result?.message || "Failed to update product.");
         }
       } catch (error) {
@@ -200,12 +198,22 @@ export default function EditProductForm({ product }: { product: Product }) {
           <div>
             <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Category</label>
             <select name="category" defaultValue={product.category} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-900 focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold appearance-none cursor-pointer">
-              {/* Add or fetch dynamic categories as needed */}
-              <option value="Holo">Holographic</option>
-              <option value="Dev">Developer</option>
-              <option value="Anime">Anime</option>
-              <option value="Vinyl">Vinyl</option>
-              <option value="Art">Art</option>
+              {/* Fallback for old categories that might still be in the DB but aren't in the new list */}
+              {["Bikes", "Anime", "Motivation", "Funny", "Aesthetic", "Tech", "Gaming", "PopCulture", "Desi", "Spiritual", "Travel", "Music"].includes(product.category) ? null : (
+                <option value={product.category} className="hidden">{product.category} (Old Category)</option>
+              )}
+              <option value="Bikes">🏍️ Bikes & Cars</option>
+              <option value="Anime">🎌 Anime & Manga</option>
+              <option value="Motivation">💪 Motivation & Hustle</option>
+              <option value="Funny">😂 Funny & Memes</option>
+              <option value="Aesthetic">✨ Aesthetic & Neon</option>
+              <option value="Tech">💻 Tech & Coding</option>
+              <option value="Gaming">🎮 Gaming & Esports</option>
+              <option value="PopCulture">🍿 Movies & Series</option>
+              <option value="Desi">🇮🇳 Desi & Slang</option>
+              <option value="Spiritual">🕉️ Devotional</option>
+              <option value="Travel">⛰️ Travel & Wanderlust</option>
+              <option value="Music">🎧 Music & Artists</option>
             </select>
           </div>
         </div>

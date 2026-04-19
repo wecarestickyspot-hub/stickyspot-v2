@@ -133,7 +133,6 @@ export default function AddProductPage() {
                 uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
                 options={{ multiple: true, maxFiles: 5, maxFileSize: 2000000, clientAllowedFormats: ["jpg", "jpeg", "png", "webp"] }} 
                 onSuccess={(result: any) => {
-                  // ✅ FIX: Prevent Duplicate Images
                   const newUrl = result.info.secure_url;
                   setImages((prev) => prev.includes(newUrl) ? prev : [...prev, newUrl]);
                 }}
@@ -185,11 +184,18 @@ export default function AddProductPage() {
               <div>
                 <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Category</label>
                 <select name="category" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-900 focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold appearance-none cursor-pointer">
-                  <option value="Holo">Holographic</option>
-                  <option value="Dev">Developer</option>
-                  <option value="Anime">Anime</option>
-                  <option value="Vinyl">Vinyl</option>
-                  <option value="Art">Art</option>
+                  <option value="Bikes">🏍️ Bikes & Cars</option>
+                  <option value="Anime">🎌 Anime & Manga</option>
+                  <option value="Motivation">💪 Motivation & Hustle</option>
+                  <option value="Funny">😂 Funny & Memes</option>
+                  <option value="Aesthetic">✨ Aesthetic & Neon</option>
+                  <option value="Tech">💻 Tech & Coding</option>
+                  <option value="Gaming">🎮 Gaming & Esports</option>
+                  <option value="PopCulture">🍿 Movies & Series</option>
+                  <option value="Desi">🇮🇳 Desi & Slang</option>
+                  <option value="Spiritual">🕉️ Devotional</option>
+                  <option value="Travel">⛰️ Travel & Wanderlust</option>
+                  <option value="Music">🎧 Music & Artists</option>
                 </select>
               </div>
             </div>
