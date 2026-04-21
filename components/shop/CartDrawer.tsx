@@ -8,6 +8,14 @@ import { validateCoupon } from "@/lib/actions";
 import toast from "react-hot-toast";
 import CldImage from "@/components/shared/CldImage";
 
+// 🚀 NAYA: TypeScript interface for fetched coupons
+type PublicCoupon = {
+  code: string;
+  value: number;
+  discountType: string;
+  description?: string;
+};
+
 export default function CartDrawer() {
   const {
     items,
@@ -28,6 +36,9 @@ export default function CartDrawer() {
   const [inputCode, setInputCode] = useState("");
   const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
   const [isPending, startTransition] = useTransition();
+  
+  // 🚀 NAYA: State to hold fetched general coupons
+  const [publicCoupons, setPublicCoupons] = useState<PublicCoupon[]>([]);
 
   // 🛡️ iOS-safe Scroll Lock
   useEffect(() => {
@@ -47,6 +58,20 @@ export default function CartDrawer() {
     };
   }, [isOpen]);
 
+  // 🚀 NAYA: Fetch public coupons when cart opens
+  useEffect(() => {
+    if (isOpen && publicCoupons.length === 0) {
+      fetch('/api/coupons/public')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setPublicCoupons(data);
+          }
+        })
+        .catch(err => console.error("Failed to fetch public coupons", err));
+    }
+  }, [isOpen, publicCoupons.length]);
+
   // --- 🧮 100% SAFE CALCULATION ---
   const { subtotal, finalTotal, discount: usedDiscount } = getCartTotal();
 
@@ -58,13 +83,12 @@ export default function CartDrawer() {
 
   const shipping = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : shippingCharge;
   
-  // 🚀 BUG FIX: Direct aur Exact Calculation (No Double Shipping)
+  // 🚀 BUG FIX: Direct aur Exact Calculation
   const totalToPay = Math.max(0, subtotal - usedDiscount) + shipping;
 
   // 🚀 NAYA: Minimum Order Value (MOV) Logic
   const MIN_ORDER_VALUE = 245;
   const amountShortForCheckout = Math.max(0, MIN_ORDER_VALUE - subtotal);
-  // Checkout block hoga agar cart khali ho YA minimum order value meet na ho rahi ho
   const isCheckoutBlocked = items.length === 0 || amountShortForCheckout > 0;
 
   // 🤫 Silent Coupon Revalidation
@@ -201,7 +225,6 @@ export default function CartDrawer() {
                       <div className="flex justify-between items-start gap-2">
                         <div>
                           <h4 className="text-sm font-bold text-slate-900 line-clamp-2 leading-tight">{item.title}</h4>
-                          {/* Bundle Tag Indicator */}
                           {(item as any).isBundle && (
                             <span className="inline-block mt-1 px-2 py-0.5 bg-pink-50 text-pink-600 text-[10px] font-black uppercase tracking-wider rounded border border-pink-100">
                               Bundle
@@ -245,43 +268,93 @@ export default function CartDrawer() {
                 ))}
               </div>
 
-              {/* Promo Code */}
-              <div className="pt-6 border-t border-slate-100 mt-6">
-                <label className="text-xs text-slate-400 uppercase font-black tracking-widest mb-3 block">Promo Code</label>
+              {/* 🎟️ PREMIUM 1-CLICK COUPON SECTION */}
+              <div className="pt-6 border-t border-slate-100 mt-6 relative">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-xs text-slate-400 uppercase font-black tracking-widest flex items-center gap-1.5">
+                    <Tag size={14} className="text-indigo-500" /> Offers & Promos
+                  </label>
+                </div>
 
                 {couponCode ? (
-                  <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-3 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-emerald-500 text-white p-1.5 rounded-lg"><Check size={16} strokeWidth={3} /></div>
+                  // ✅ APPLIED STATE (Premium Green Box)
+                  <div className="bg-emerald-50 border-2 border-emerald-100 shadow-sm rounded-2xl p-4 flex justify-between items-center relative overflow-hidden animate-in zoom-in duration-300">
+                    <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full border-r-2 border-emerald-100"></div>
+                    <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full border-l-2 border-emerald-100"></div>
+                    
+                    <div className="flex items-center gap-3 pl-3">
+                      <div className="bg-emerald-500 text-white p-2 rounded-xl shadow-sm"><Check size={18} strokeWidth={3} /></div>
                       <div>
-                        <p className="text-slate-900 font-black text-sm tracking-wider uppercase">{couponCode}</p>
-                        <p className="text-[10px] text-emerald-500 font-bold mt-0.5">Discount Applied</p>
+                        <p className="text-emerald-900 font-black text-base tracking-wide uppercase">{couponCode}</p>
+                        <p className="text-xs text-emerald-600 font-bold mt-0.5">Yay! You saved ₹{usedDiscount.toFixed(2)} 🎉</p>
                       </div>
                     </div>
-                    <button onClick={handleRemoveCoupon} aria-label="Remove coupon" className="p-1.5 bg-slate-50 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"><X size={14} strokeWidth={2.5} /></button>
+                    <button onClick={handleRemoveCoupon} aria-label="Remove coupon" className="p-2 bg-white rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors shadow-sm mr-1"><X size={16} strokeWidth={2.5} /></button>
                   </div>
                 ) : (
-                  <div className="flex gap-2 bg-white border border-slate-200 rounded-2xl p-1 shadow-sm focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
-                    <input
-                      value={inputCode}
-                      onChange={(e) => setInputCode(e.target.value)}
-                      placeholder="Enter code"
-                      className="w-full min-w-0 flex-1 bg-transparent px-3 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none uppercase"
-                    />
-                    <button
-                      onClick={handleApplyCoupon}
-                      disabled={isPending || !inputCode || !!couponCode}
-                      className="shrink-0 bg-slate-900 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-indigo-600 disabled:opacity-50 transition-colors flex justify-center items-center"
-                    >
-                      {isPending ? <Loader2 size={16} className="animate-spin" /> : "Apply"}
-                    </button>
-                  </div>
-                )}
+                  <div className="space-y-4">
+                    {/* MANUAL INPUT (Always stays so STICKY10 can be typed) */}
+                    <div className="flex gap-2 bg-white border border-slate-200 rounded-2xl p-1 shadow-sm focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
+                      <input
+                        value={inputCode}
+                        onChange={(e) => setInputCode(e.target.value)}
+                        placeholder="Enter promo code"
+                        className="w-full min-w-0 flex-1 bg-transparent px-4 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none uppercase"
+                      />
+                      <button
+                        id="apply-coupon-btn"
+                        onClick={handleApplyCoupon}
+                        disabled={isPending || !inputCode || !!couponCode}
+                        className="shrink-0 bg-slate-900 text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-indigo-600 disabled:opacity-50 transition-colors flex justify-center items-center active:scale-95"
+                      >
+                        {isPending ? <Loader2 size={16} className="animate-spin" /> : "Apply"}
+                      </button>
+                    </div>
 
-                {message && !couponCode && (
-                  <p className={`text-xs mt-2 font-bold flex items-center gap-1 ${message.type === 'error' ? 'text-rose-500' : 'text-emerald-500'}`}>
-                    {message.type === 'error' ? <X size={12} /> : <Check size={12} />} {message.text}
-                  </p>
+                    {message && !couponCode && (
+                      <p className={`text-xs font-bold flex items-center gap-1 ${message.type === 'error' ? 'text-rose-500' : 'text-emerald-500'}`}>
+                        {message.type === 'error' ? <X size={12} /> : <Check size={12} />} {message.text}
+                      </p>
+                    )}
+
+                    {/* 🚀 THE HACK: Dynamic 1-Click Suggestion Tickets */}
+                    {publicCoupons.length > 0 && (
+                      <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-2 pt-1 -mx-2 px-2 snap-x">
+                        {publicCoupons.map((coupon, idx) => {
+                          const isEven = idx % 2 === 0;
+                          return (
+                            <div key={coupon.code} className={`snap-start shrink-0 w-[85%] border rounded-2xl p-4 relative overflow-hidden group ${isEven ? 'bg-indigo-50/50 border-indigo-100/80' : 'bg-rose-50/50 border-rose-100/80'}`}>
+                              {/* Ticket cutouts */}
+                              <div className={`absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full border-r ${isEven ? 'border-indigo-100/80' : 'border-rose-100/80'}`}></div>
+                              <div className={`absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full border-l ${isEven ? 'border-indigo-100/80' : 'border-rose-100/80'}`}></div>
+                              
+                              <div className="flex justify-between items-start pl-2 pr-1">
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className={`${isEven ? 'bg-indigo-600 border-indigo-500' : 'bg-rose-500 border-rose-400'} text-white text-[10px] font-black uppercase px-2 py-0.5 rounded border`}>
+                                      {coupon.code}
+                                    </span>
+                                  </div>
+                                  <p className={`text-xs font-bold leading-tight ${isEven ? 'text-indigo-900' : 'text-rose-900'}`}>
+                                    {coupon.description || `Save ${coupon.discountType === 'PERCENTAGE' ? `${coupon.value}%` : `₹${coupon.value}`} on this order.`}
+                                  </p>
+                                </div>
+                                <button 
+                                  onClick={() => {
+                                    setInputCode(coupon.code);
+                                    setTimeout(() => document.querySelector<HTMLButtonElement>('#apply-coupon-btn')?.click() || handleApplyCoupon(), 100);
+                                  }}
+                                  className={`text-[10px] font-black bg-white px-3 py-1.5 rounded-lg transition-colors shadow-sm active:scale-95 ${isEven ? 'text-indigo-600 border border-indigo-100 hover:bg-indigo-600 hover:text-white' : 'text-rose-600 border border-rose-100 hover:bg-rose-500 hover:text-white'}`}
+                                >
+                                  TAP TO APPLY
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -292,7 +365,7 @@ export default function CartDrawer() {
         {items.length > 0 && (
           <div className="p-6 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.03)] shrink-0 z-20">
             
-            {/* 🎯 NAYA: The Upsell Warning Box */}
+            {/* 🎯 The Upsell Warning Box */}
             {amountShortForCheckout > 0 && (
               <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl mb-4 flex items-start gap-2 animate-in slide-in-from-bottom-2">
                 <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={16} />
@@ -326,14 +399,6 @@ export default function CartDrawer() {
                   <span className="text-base font-bold text-slate-900">Total</span>
                   <span className="text-2xl font-black text-indigo-600">₹{isNaN(totalToPay) ? "0.00" : totalToPay.toFixed(2)}</span>
                 </div>
-
-                {usedDiscount > 0 && (
-                  <div className="text-right mt-1">
-                    <span className="text-[10px] text-emerald-500 font-black tracking-wide uppercase bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
-                      You saved ₹{usedDiscount.toFixed(2)} 🎉
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 

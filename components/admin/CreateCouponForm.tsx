@@ -13,16 +13,15 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-indigo-600 transition-all flex justify-center items-center gap-2 shadow-lg shadow-slate-900/10 disabled:opacity-50 mt-2 active:scale-95"
+      className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-indigo-600 transition-all flex justify-center items-center gap-2 shadow-lg shadow-slate-900/10 disabled:opacity-50 mt-4 active:scale-95 group"
     >
-      {pending ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} strokeWidth={2.5} />}
+      {pending ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} strokeWidth={3} className="group-hover:scale-125 transition-transform" />}
       {pending ? "Generating Code..." : "Generate Promo Code"}
     </button>
   );
 }
 
 export default function CreateCouponForm() {
-  // 🧠 FIX 8: Ref added to reset the form after success
   const formRef = useRef<HTMLFormElement>(null);
 
   return (
@@ -38,7 +37,6 @@ export default function CreateCouponForm() {
             formRef.current?.reset(); // Clear the form fields
           }
         } catch (error) {
-          // 🧠 FIX 7: Fallback error handling if server crashes completely
           toast.error("Something went wrong on our end.");
           console.error("Coupon creation failed:", error);
         }
@@ -56,7 +54,6 @@ export default function CreateCouponForm() {
                 name="code" 
                 type="text" 
                 placeholder="e.g. FESTIVAL50" 
-                // Front-end hint, but REAL check is on backend
                 pattern="^[a-zA-Z0-9]{3,20}$"
                 title="3 to 20 alphanumeric characters only"
                 className="w-full bg-slate-50 border border-slate-200 pl-11 pr-4 py-3.5 rounded-2xl focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all font-black text-slate-900 uppercase placeholder:text-slate-300" 
@@ -99,22 +96,53 @@ export default function CreateCouponForm() {
             required 
             name="endDate" 
             type="date" 
-            // Set min date to today on frontend
             min={new Date().toISOString().split('T')[0]}
             className="w-full bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-2xl focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-slate-900" 
         />
       </div>
 
-      {/* 5. Usage Limit */}
+      {/* 5. Ticket Description (NEW) */}
       <div>
-        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Usage Limit (Optional)</label>
+        <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Cart Ticket Text (Optional)</label>
         <input 
-            name="usageLimit" 
-            type="number" 
-            min="1"
-            placeholder="e.g. 100 uses" 
+            name="description" 
+            type="text" 
+            placeholder="e.g. Save ₹50 on this order!" 
+            maxLength={40}
             className="w-full bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-2xl focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-slate-900 placeholder:text-slate-300" 
         />
+      </div>
+
+      {/* 6. Usage Limit & Public Toggle */}
+      <div className="flex flex-col gap-4">
+        <div>
+          <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Usage Limit (Optional)</label>
+          <input 
+              name="usageLimit" 
+              type="number" 
+              min="1"
+              placeholder="e.g. 100 uses" 
+              className="w-full bg-slate-50 border border-slate-200 px-4 py-3.5 rounded-2xl focus:outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-slate-900 placeholder:text-slate-300" 
+          />
+        </div>
+
+        {/* 🚀 THE MAGIC TOGGLE: Public vs Secret */}
+        <label className="flex items-start gap-3 p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl cursor-pointer group hover:bg-indigo-50 transition-colors">
+          <div className="pt-0.5">
+            <input 
+              type="checkbox" 
+              name="isPublic" 
+              value="true" 
+              className="w-5 h-5 accent-indigo-600 rounded cursor-pointer" 
+            />
+          </div>
+          <div>
+            <span className="text-sm font-black text-indigo-900 block group-hover:text-indigo-700">Show in Cart Drawer</span>
+            <span className="text-[11px] font-bold text-indigo-600/70 leading-tight block mt-0.5">
+              If checked, this code will automatically appear as a "1-Click Ticket" to all users in their cart. Leave unchecked for secret codes.
+            </span>
+          </div>
+        </label>
       </div>
 
       {/* Submit Button */}

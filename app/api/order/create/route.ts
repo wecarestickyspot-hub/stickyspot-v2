@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { z } from "zod";
 
-// 🛡️ 5. Input Validation Schema (Zod)
+// 🛡️ 1. Input Validation Schema (Zod)
 const checkoutSchema = z.object({
   customerDetails: z.object({
     name: z.string().min(2),
@@ -59,22 +59,66 @@ export async function POST(req: Request) {
       serverSubtotal += product.price * item.quantity;
     }
 
-    // 🛡️ 4. Validate Coupon on Server
+    // 🚀 4. THE SMART COUPON ENGINE
     let serverDiscount = 0;
+    
     if (couponCode) {
-      const coupon = await prisma.coupon.findUnique({ where: { code: couponCode.toUpperCase() } });
-      if (coupon && coupon.isActive && new Date() <= new Date(coupon.endDate)) {
-        if (!coupon.usageLimit || coupon.usedCount < coupon.usageLimit) {
-          serverDiscount = coupon.discountType === "PERCENTAGE" 
-            ? (serverSubtotal * coupon.value) / 100 
-            : coupon.value;
+      const codeUpper = couponCode.toUpperCase();
+
+      if (codeUpper === "STICKY10") {
+        // --- 🛑 HACK 1: "Baar-Baar Use" (One-time use check) ---
+        const pastUsage = await prisma.order.findFirst({
+          where: { 
+            phone: customerDetails.phone, 
+            couponCode: codeUpper,
+            status: { not: "CANCELLED" } 
+          }
+        });
+
+        if (pastUsage) {
+          return NextResponse.json({ error: "Aap is code ko pehle hi use kar chuke hain! Naye offers try karein. 😉" }, { status: 400 });
+        }
+
+        // --- 🔍 Find their Last Order ---
+        const lastOrder = await prisma.order.findFirst({
+          where: { phone: customerDetails.phone, status: { not: "CANCELLED" } },
+          orderBy: { createdAt: 'desc' }
+        });
+
+        if (!lastOrder) {
+          // --- 🛑 HACK 2: "Naya Dost Scam" (First Time Buyer Welcome Discount) ---
+          serverDiscount = Math.round(serverSubtotal * 0.10); 
+        } else {
+          // --- 🛑 HACK 3 & 4: "Dynamic Expiry & Shipping Grace Period" ---
+          const fortyDaysAgo = new Date();
+          fortyDaysAgo.setDate(fortyDaysAgo.getDate() - 40);
+
+          if (lastOrder.createdAt >= fortyDaysAgo) {
+            serverDiscount = Math.round(serverSubtotal * 0.10); // Active within 40 days
+          } else {
+            return NextResponse.json({ error: "Yeh code aapke last order ke 30 din tak hi valid tha. Agli baar jaldi aana! ⏰" }, { status: 400 });
+          }
+        }
+      } else {
+        // --- 🏷️ STANDARD DATABASE COUPONS ---
+        const coupon = await prisma.coupon.findUnique({ where: { code: codeUpper } });
+        if (coupon && coupon.isActive && new Date() <= new Date(coupon.endDate)) {
+          if (!coupon.usageLimit || coupon.usedCount < coupon.usageLimit) {
+            serverDiscount = coupon.discountType === "PERCENTAGE" 
+              ? (serverSubtotal * coupon.value) / 100 
+              : coupon.value;
+          } else {
+            return NextResponse.json({ error: "Coupon usage limit reached." }, { status: 400 });
+          }
+        } else {
+          return NextResponse.json({ error: "Invalid or expired coupon code." }, { status: 400 });
         }
       }
     }
 
     const serverFinalAmount = serverSubtotal - serverDiscount;
 
-    // 🏗️ 4. DATABASE TRANSACTION (All or Nothing)
+    // 🏗️ 5. DATABASE TRANSACTION (All or Nothing)
     const result = await prisma.$transaction(async (tx) => {
       // Create Order
       const order = await tx.order.create({
@@ -110,8 +154,8 @@ export async function POST(req: Request) {
         });
       }
 
-      // Update Coupon Usage
-      if (couponCode) {
+      // Update DB Coupon Usage (Skip if it's our custom STICKY10 code to avoid Prisma errors)
+      if (couponCode && couponCode.toUpperCase() !== "STICKY10") {
         await tx.coupon.update({
           where: { code: couponCode.toUpperCase() },
           data: { usedCount: { increment: 1 } }

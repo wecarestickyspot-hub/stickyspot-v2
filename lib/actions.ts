@@ -157,19 +157,32 @@ export async function createCoupon(formData: FormData) {
     const code = String(formData.get("code")).trim().toUpperCase();
     if (await prisma.coupon.findUnique({ where: { code } })) return { error: "Code exists" };
 
+    // 🚀 NAYA: Capture new fields from the form
+    const usageLimitStr = formData.get("usageLimit");
+    const usageLimit = usageLimitStr ? parseInt(String(usageLimitStr)) : null;
+    const isPublic = formData.get("isPublic") === "true";
+    const description = formData.get("description") as string || null;
+
     await prisma.coupon.create({
       data: {
         code,
         discountType: formData.get("discountType") as any,
         value: z.coerce.number().positive().parse(formData.get("value")),
         endDate: new Date(formData.get("endDate") as string),
-        isActive: true, usedCount: 0
+        usageLimit: usageLimit,     // Added
+        isPublic: isPublic,         // Added
+        description: description,   // Added
+        isActive: true, 
+        usedCount: 0
       }
     });
 
     revalidatePath("/admin/coupons");
     return { success: true };
-  } catch (error) { return { error: "Coupon failed" }; }
+  } catch (error) { 
+    console.error("Coupon Creation Error:", error);
+    return { error: "Coupon failed" }; 
+  }
 }
 
 export async function toggleCouponStatus(id: string) {
@@ -187,10 +200,32 @@ export async function toggleCouponStatus(id: string) {
 }
 
 export async function validateCoupon(code: string, cartTotal: number) {
-  const coupon = await prisma.coupon.findUnique({ where: { code: code.toUpperCase(), isActive: true } });
-  if (!coupon || new Date() > new Date(coupon.endDate)) return { error: "Invalid/Expired" };
+  const codeUpper = code.trim().toUpperCase();
 
-  let discount = coupon.discountType === "PERCENTAGE" ? (cartTotal * coupon.value) / 100 : coupon.value;
+  // 🚀 THE MAGIC BYPASS: Let STICKY10 pass for frontend UI (Strict check is in Checkout API)
+  if (codeUpper === "STICKY10") {
+    const discount = (cartTotal * 10) / 100; // 10% Off
+    return { success: true, discount: Math.min(discount, cartTotal), code: "STICKY10" };
+  }
+
+  // 🏷️ Standard Database Coupon Check
+  const coupon = await prisma.coupon.findUnique({ 
+    where: { code: codeUpper, isActive: true } 
+  });
+
+  if (!coupon || new Date() > new Date(coupon.endDate)) {
+    return { error: "Invalid or Expired Promo Code." };
+  }
+
+  // 🛑 Check Usage Limit
+  if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+    return { error: "This coupon's usage limit has been reached." };
+  }
+
+  let discount = coupon.discountType === "PERCENTAGE" 
+    ? (cartTotal * coupon.value) / 100 
+    : coupon.value;
+    
   return { success: true, discount: Math.min(discount, cartTotal), code: coupon.code };
 }
 
