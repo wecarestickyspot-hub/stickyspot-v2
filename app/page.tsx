@@ -31,7 +31,6 @@ type MinimalProduct = {
 };
 
 export default async function HomePage() {
-  // 🚀 CLEAN & FAST: Sirf zaroori data fetch hoga, koi Clerk/Auth ka wait nahi!
   let latestProducts: MinimalProduct[] = [];
   let heroImage = "/placeholder.png"; 
 
@@ -58,8 +57,25 @@ export default async function HomePage() {
       <div className="absolute -top-32 -left-32 w-[500px] h-[500px] bg-indigo-300/30 rounded-full blur-3xl -z-10 animate-pulse" />
       <div className="absolute top-40 -right-32 w-[400px] h-[400px] bg-purple-300/20 rounded-full blur-3xl -z-10" />
 
+      {/* --- 🚀 NAYA: D2C MARQUEE (Scrolling Banner) --- */}
+      <div className="w-full bg-indigo-600 text-white py-2 overflow-hidden flex whitespace-nowrap">
+        <div className="animate-[marquee_20s_linear_infinite] flex gap-8 items-center text-[10px] sm:text-xs font-black uppercase tracking-widest">
+          <span>⚡ 100% Waterproof Vinyl</span>
+          <span>⚡ Leaves Zero Residue</span>
+          <span>⚡ Free Shipping Over ₹199</span>
+          <span>⚡ Cash on Delivery Available</span>
+          <span>⚡ Made in India 🇮🇳</span>
+          {/* Duplicate for seamless looping */}
+          <span>⚡ 100% Waterproof Vinyl</span>
+          <span>⚡ Leaves Zero Residue</span>
+          <span>⚡ Free Shipping Over ₹199</span>
+          <span>⚡ Cash on Delivery Available</span>
+          <span>⚡ Made in India 🇮🇳</span>
+        </div>
+      </div>
+
       {/* --- HERO SECTION --- */}
-      <section className="relative pt-10 pb-16 lg:pt-12 lg:pb-24 z-10 overflow-visible">
+      <section className="relative pt-8 pb-16 lg:pt-12 lg:pb-24 z-10 overflow-visible">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
 
@@ -68,11 +84,10 @@ export default async function HomePage() {
               <div className="inline-flex items-center gap-2 mb-6 px-4 py-1.5 rounded-full bg-white/50 backdrop-blur-md border border-white/60 shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
                 <span className="text-[10px] font-black tracking-[0.2em] uppercase text-indigo-900">
-                  New Collection Drop
+                  Premium Drop Live
                 </span>
               </div>
 
-              {/* 🚀 LCP ELEMENT: Will now render instantly without blocking! */}
               <h1 className="text-5xl md:text-6xl lg:text-8xl font-black tracking-tighter mb-6 text-slate-900 leading-[0.95] drop-shadow-sm">
                 Stick Your <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-br from-indigo-600 to-purple-600">
@@ -96,7 +111,6 @@ export default async function HomePage() {
               <div className="mt-8 pt-6 border-t border-slate-200/60 flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-6 text-sm font-semibold text-slate-700">
                 <span className="flex items-center gap-1.5"><Star className="w-4 h-4 text-amber-500 fill-amber-500"/> 1,000+ Happy Customers</span>
                 <span className="flex items-center gap-1.5"><Truck className="w-4 h-4 text-indigo-500"/> Fast Shipping India 🇮🇳</span>
-                <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-500"/> 100% Waterproof</span>
               </div>
             </div>
 
@@ -112,7 +126,6 @@ export default async function HomePage() {
                     sizes="(max-width: 1024px) 100vw, 50vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
                     priority
-                    // 🚀 Added high priority for faster loading
                   />
                 </div>
               </div>
@@ -142,13 +155,37 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* --- LATEST DROPS --- */}
+      {/* --- 🚀 NAYA: SHOP BY VIBE (Bento Box Categories) --- */}
       <section className="py-16 lg:py-24 max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter text-slate-900 mb-3">Shop by Vibe</h2>
+          <p className="text-slate-500 font-medium">Find the perfect sticker for your personality.</p>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Link href="/shop?category=Anime" className="group relative h-40 md:h-56 rounded-3xl overflow-hidden bg-rose-100 flex items-end p-5 hover:shadow-xl hover:-translate-y-1 transition-all">
+            <div className="absolute inset-0 bg-gradient-to-t from-rose-900/80 to-transparent z-10" />
+            <h3 className="relative z-20 text-white font-black text-xl tracking-wide group-hover:scale-105 transition-transform">🎌 Anime</h3>
+          </Link>
+          <Link href="/shop?category=Tech" className="group relative h-40 md:h-56 rounded-3xl overflow-hidden bg-sky-100 flex items-end p-5 hover:shadow-xl hover:-translate-y-1 transition-all">
+            <div className="absolute inset-0 bg-gradient-to-t from-sky-900/80 to-transparent z-10" />
+            <h3 className="relative z-20 text-white font-black text-xl tracking-wide group-hover:scale-105 transition-transform">💻 Tech</h3>
+          </Link>
+          <Link href="/shop?category=Motivation" className="group relative h-40 md:h-56 rounded-3xl overflow-hidden bg-amber-100 flex items-end p-5 hover:shadow-xl hover:-translate-y-1 transition-all">
+            <div className="absolute inset-0 bg-gradient-to-t from-amber-900/80 to-transparent z-10" />
+            <h3 className="relative z-20 text-white font-black text-xl tracking-wide group-hover:scale-105 transition-transform">💪 Hustle</h3>
+          </Link>
+          <Link href="/shop?category=Bikes" className="group relative h-40 md:h-56 rounded-3xl overflow-hidden bg-emerald-100 flex items-end p-5 hover:shadow-xl hover:-translate-y-1 transition-all">
+            <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/80 to-transparent z-10" />
+            <h3 className="relative z-20 text-white font-black text-xl tracking-wide group-hover:scale-105 transition-transform">🏍️ Auto</h3>
+          </Link>
+        </div>
+      </section>
+
+      {/* --- LATEST DROPS --- */}
+      <section className="pb-16 lg:pb-24 max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-10 gap-5 border-b border-slate-200 pb-6 md:pb-8">
           <div>
-            <p className="text-indigo-600 font-bold text-xs sm:text-sm md:text-base mb-2 md:mb-3 flex items-center gap-2">
-                Loved by Developers & Creators Across India 🇮🇳
-            </p>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tighter text-slate-900">Latest Drops</h2>
           </div>
           <Link href="/shop" className="group flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-slate-700 bg-white border border-slate-200 w-full md:w-auto px-6 py-3 rounded-full hover:bg-slate-900 hover:text-white transition-all shadow-sm">
@@ -166,11 +203,12 @@ export default async function HomePage() {
                   title={product.title}
                   slug={product.slug}
                   price={Number(product.price)}
-                  image={product.images?.[0] ?? "/placeholder.png"}
+                  // 🚀 FIX: Cloudinary Speed Hack Implemented!
+                  image={product.images?.[0] ? product.images[0].replace('/upload/', '/upload/f_auto,q_auto:good,w_400,c_limit/') : "/placeholder.png"}
                   category={product.category}
                   stock={product.stock}
                   createdAt={product.createdAt.toISOString()} 
-                  hideWishlist={true} // 🚀 MAGIC: Wishlist yahan se hide kar di! Page ultra-light ho gaya.
+                  hideWishlist={true} 
                 />
               </div>
             ))
@@ -184,6 +222,7 @@ export default async function HomePage() {
 
       {/* --- FEATURES SECTION --- */}
       <section className="py-10 lg:py-20 relative z-10">
+        {/* Same as your previous code */}
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-8 lg:mb-12">
             <h2 className="text-2xl md:text-4xl font-black tracking-tight text-slate-900 mb-2 lg:mb-3">Why Choose StickySpot?</h2>
