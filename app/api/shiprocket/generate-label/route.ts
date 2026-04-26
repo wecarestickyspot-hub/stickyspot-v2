@@ -61,8 +61,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: `Cannot ship order with status: ${order.status}` }, { status: 400 });
     }
 
-    // Checking if already has an AWB (Add trackingNumber to your prisma schema!)
-    // (order.status as string) lagane se hum TS ko bolte hain: "Dimag mat laga, string ki tarah check kar"
+    // Checking if already has an AWB
     if ((order.status as string) === "SHIPPED" || (order as any).trackingNumber) {
       return NextResponse.json({ success: false, message: "Order is already shipped or has an AWB." }, { status: 400 });
     }
@@ -71,15 +70,13 @@ export async function POST(req: Request) {
     const token = await getShiprocketToken();
     if (!token) return NextResponse.json({ success: false, message: "Shiprocket Auth Failed" }, { status: 500 });
 
-    // 📝 5. Smart Address Parsing (Hack for combined address string)
-    // Assuming format: "Address, City, State - Pincode" (from your CheckoutPage)
+    // 📝 5. Smart Address Parsing
     const addressParts = order.address.split(',');
     const cityStatePincode = addressParts.length > 1 ? addressParts[addressParts.length - 2] + addressParts[addressParts.length - 1] : "";
 
     const pincodeMatch = order.address.match(/\b\d{6}\b/);
     const extractedPincode = pincodeMatch ? pincodeMatch[0] : "302001";
 
-    // Fallback logic: If we can't extract city/state properly, we pass "Other" to let Shiprocket auto-detect via Pincode
     const extractedCity = addressParts.length > 1 ? addressParts[addressParts.length - 2].trim() : "Other";
     const extractedState = addressParts.length > 2 ? addressParts[addressParts.length - 1].replace(/-\s*\d{6}/, '').trim() : "Other";
 
@@ -93,7 +90,7 @@ export async function POST(req: Request) {
       pickup_location: process.env.SHIPROCKET_PICKUP_LOCATION || "Primary",
       billing_customer_name: firstName,
       billing_last_name: lastName,
-      billing_address: order.address.slice(0, 80), // Shiprocket limits length
+      billing_address: order.address.slice(0, 80),
       billing_city: extractedCity,
       billing_pincode: extractedPincode,
       billing_state: extractedState,
@@ -103,7 +100,8 @@ export async function POST(req: Request) {
       shipping_is_billing: true,
       order_items: order.items.map((item) => ({
         name: item.title.slice(0, 50),
-        sku: `SKU-${item.productId.slice(-6).toUpperCase()}`,
+        // 🚀 FIX: Fallback to item.id if productId is null (Custom Mug Support)
+        sku: `SKU-${(item.productId || item.id).slice(-6).toUpperCase()}`,
         units: item.quantity,
         selling_price: item.price,
         discount: 0,
@@ -163,9 +161,9 @@ export async function POST(req: Request) {
           where: { id: orderId },
           data: {
             status: "SHIPPED",
-            trackingNumber: trackingNumber, // ⚠️ Update Prisma schema: trackingNumber String?
-            trackingUrl: labelUrl,          // ⚠️ Update Prisma schema: trackingUrl String?
-            courierName: courierName        // ⚠️ Update Prisma schema: courierName String?
+            trackingNumber: trackingNumber,
+            trackingUrl: labelUrl, 
+            courierName: courierName 
           }
         });
 
@@ -173,7 +171,7 @@ export async function POST(req: Request) {
           success: true,
           awb: trackingNumber,
           courier: courierName,
-          label_url: labelUrl, // Now frontend can download the PDF!
+          label_url: labelUrl,
           message: "Label Generated & Order Shipped!"
         });
       } else {
