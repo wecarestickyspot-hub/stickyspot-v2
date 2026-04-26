@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { sendOrderConfirmation } from "@/lib/sendEmail";
+import { Prisma } from "@prisma/client"; // 🚀 NAYA: Type safety ke liye import kiya
 
 export async function POST(req: Request) {
   try {
@@ -48,7 +49,7 @@ export async function POST(req: Request) {
       }
 
       // 🏗️ 5. Atomic Transaction (Database Safety)
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         // Mark Order as PAID
         await tx.order.update({
           where: { id: order.id },
@@ -60,10 +61,13 @@ export async function POST(req: Request) {
 
         // 📉 6. Deduct Stock Only Now!
         for (const item of order.items) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: { decrement: item.quantity } }
-          });
+          // 🚀 FIX: Sirf unhi items ka stock kam karo jinka asli productId hai (Custom Mug ko chhod do)
+          if (item.productId) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { stock: { decrement: item.quantity } }
+            });
+          }
         }
       });
 
