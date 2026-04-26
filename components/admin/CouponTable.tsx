@@ -1,7 +1,7 @@
 "use client";
 
 import { deleteCoupon, toggleCouponStatus } from "@/lib/actions";
-import { Trash2, Power, Calendar, TicketPercent, Copy, Loader2 } from "lucide-react";
+import { Trash2, Power, Calendar, TicketPercent, Copy, Loader2, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { useState, useTransition } from "react";
 
@@ -10,7 +10,7 @@ export default function CouponTable({ coupons }: { coupons: any[] }) {
   const [isPending, startTransition] = useTransition();
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  // 📋 Copy to Clipboard Logic with Fallback for older browsers
+  // 📋 Copy to Clipboard Logic with Fallback
   const handleCopy = (code: string) => {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(code);
@@ -30,15 +30,12 @@ export default function CouponTable({ coupons }: { coupons: any[] }) {
     }
   };
 
-  // 🗑️ Safe Delete Logic with Loading & Error Handling
+  // 🗑️ Safe Delete Logic
   const handleDelete = (id: string, code: string) => {
     if (window.confirm(`Are you sure you want to delete coupon ${code}? This action cannot be undone.`)) {
       setProcessingId(id);
       startTransition(async () => {
         try {
-          const formData = new FormData();
-          formData.append("id", id);
-
           const result = await deleteCoupon(id);
 
           if (result?.error) {
@@ -55,20 +52,12 @@ export default function CouponTable({ coupons }: { coupons: any[] }) {
     }
   };
 
-  // 🔄 Safe Toggle Logic with Loading & Error Handling
-  // Hum function mein 'currentStatus' bhi mangwayenge taaki toggle kar sakein
+  // 🔄 Safe Toggle Logic
   const handleToggle = (id: string, currentStatus: boolean) => {
     setProcessingId(id);
 
     startTransition(async () => {
       try {
-        // ❌ Ye FormData wala code hata do
-        // const formData = new FormData();
-        // formData.append("id", id);
-        // const result = await toggleCouponStatus(formData);
-
-        // ✅ Sahi Code: Seedha ID aur Naya Status bhejo
-        // Hum '!currentStatus' bhej rahe hain taaki wo True se False (ya ulta) ho jaye
         const result = await toggleCouponStatus(id);
 
         if (!result.success) {
@@ -92,10 +81,10 @@ export default function CouponTable({ coupons }: { coupons: any[] }) {
       </div>
 
       <div className="overflow-x-auto custom-scrollbar">
-        <table className="w-full text-left border-collapse min-w-[600px]">
+        <table className="w-full text-left border-collapse min-w-[700px]">
           <thead>
             <tr className="bg-slate-50 text-slate-400 text-xs font-black uppercase tracking-widest border-b border-slate-100">
-              <th className="px-6 py-4">Code</th>
+              <th className="px-6 py-4">Code Details</th>
               <th className="px-6 py-4">Value</th>
               <th className="px-6 py-4">Usage</th>
               <th className="px-6 py-4">Status</th>
@@ -111,17 +100,37 @@ export default function CouponTable({ coupons }: { coupons: any[] }) {
 
               return (
                 <tr key={coupon.id} className="hover:bg-slate-50/80 transition-colors group">
-                  {/* 1. Code */}
+                  {/* 1. Code Details (UPGRADED) */}
                   <td className="px-6 py-5">
-                    <div className="flex items-center gap-2 bg-indigo-50/50 border border-indigo-100/50 w-fit px-3 py-1.5 rounded-lg group/copy cursor-pointer" onClick={() => handleCopy(coupon.code)}>
-                      <TicketPercent size={14} className="text-indigo-500" />
-                      <span className="font-mono font-bold text-indigo-700 uppercase tracking-wider text-sm">{coupon.code}</span>
-                      <Copy size={12} className="text-indigo-400 opacity-0 group-hover/copy:opacity-100 transition-opacity ml-1" />
+                    <div className="flex flex-col items-start gap-2">
+                      <div className="flex items-center gap-2 bg-indigo-50/50 border border-indigo-100/50 w-fit px-3 py-1.5 rounded-lg group/copy cursor-pointer" onClick={() => handleCopy(coupon.code)}>
+                        <TicketPercent size={14} className="text-indigo-500" />
+                        <span className="font-mono font-bold text-indigo-700 uppercase tracking-wider text-sm">{coupon.code}</span>
+                        <Copy size={12} className="text-indigo-400 opacity-0 group-hover/copy:opacity-100 transition-opacity ml-1" />
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        {coupon.isPublic ? (
+                           <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                             <Eye size={10} /> Public (In Cart)
+                           </span>
+                        ) : (
+                           <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">
+                             <EyeOff size={10} /> Secret
+                           </span>
+                        )}
+                      </div>
+
+                      {coupon.description && (
+                        <p className="text-xs text-slate-400 font-medium truncate max-w-[200px]" title={coupon.description}>
+                          "{coupon.description}"
+                        </p>
+                      )}
                     </div>
                   </td>
 
                   {/* 2. Value */}
-                  <td className="px-6 py-5">
+                  <td className="px-6 py-5 align-top pt-7">
                     <div className="flex flex-col">
                       <span className="font-bold text-slate-900">
                         {coupon.discountType === "PERCENTAGE" ? `${coupon.value}% OFF` : `₹${coupon.value} FLAT`}
@@ -133,7 +142,7 @@ export default function CouponTable({ coupons }: { coupons: any[] }) {
                   </td>
 
                   {/* 3. Usage & Expiry */}
-                  <td className="px-6 py-5">
+                  <td className="px-6 py-5 align-top pt-7">
                     <div className="flex flex-col gap-1">
                       <span className={`text-sm font-bold ${isExhausted ? "text-amber-500" : "text-slate-600"}`}>
                         {coupon.usedCount} <span className="text-slate-400 font-medium">/ {coupon.usageLimit ? coupon.usageLimit : "∞"} uses</span>
@@ -148,7 +157,7 @@ export default function CouponTable({ coupons }: { coupons: any[] }) {
                   </td>
 
                   {/* 4. Smart Status Badge */}
-                  <td className="px-6 py-5">
+                  <td className="px-6 py-5 align-top pt-7">
                     <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border ${isExhausted
                         ? "bg-amber-50 text-amber-600 border-amber-200"
                         : coupon.isActive && !isExpired
@@ -163,7 +172,7 @@ export default function CouponTable({ coupons }: { coupons: any[] }) {
                   </td>
 
                   {/* 5. Actions */}
-                  <td className="px-6 py-5 text-right">
+                  <td className="px-6 py-5 text-right align-top pt-6">
                     <div className="flex items-center justify-end gap-2 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
 
                       {/* Secure Toggle Action */}

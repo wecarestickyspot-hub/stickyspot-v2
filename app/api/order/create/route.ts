@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { z } from "zod";
+import { Prisma } from "@prisma/client"; // 🚀 NAYA: TypeScript ke liye Prisma import kiya
 
 // 🛡️ 1. Input Validation Schema (Zod)
 const checkoutSchema = z.object({
@@ -17,6 +18,7 @@ const checkoutSchema = z.object({
   cartItems: z.array(z.object({
     id: z.string(),
     quantity: z.number().min(1),
+    image: z.string().optional(),
   })),
   razorpay_order_id: z.string(),
   razorpay_payment_id: z.string(),
@@ -42,31 +44,43 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Payment verification failed! 🚫" }, { status: 400 });
     }
 
-    // 🛡️ 3. Fetch Real Product Data & Recalculate (SERVER-SIDE ONLY)
-    const dbProducts = await prisma.product.findMany({
-      where: { id: { in: cartItems.map(item => item.id) } }
-    });
+    // 🚀 3. THE MAGIC SPLIT: Separate Normal Items from Custom Items
+    const standardItems = cartItems.filter(item => !item.id.startsWith("custom-mug-"));
+    const customItems = cartItems.filter(item => item.id.startsWith("custom-mug-"));
+
+    // 🛡️ 4. Fetch Real Product Data ONLY for Standard Items
+    let dbProducts: any[] = [];
+    if (standardItems.length > 0) {
+      dbProducts = await prisma.product.findMany({
+        where: { id: { in: standardItems.map(item => item.id) } }
+      });
+    }
 
     let serverSubtotal = 0;
-    for (const item of cartItems) {
+
+    // --- Process Standard Items ---
+    for (const item of standardItems) {
       const product = dbProducts.find(p => p.id === item.id);
-      if (!product) throw new Error(`Product ${item.id} not found`);
+      if (!product) return NextResponse.json({ error: `Product ${item.id} not found` }, { status: 400 });
       
-      // 🛡️ 3.1 Stock Validation
       if (product.stock < item.quantity) {
         return NextResponse.json({ error: `Insufficient stock for ${product.title}` }, { status: 400 });
       }
       serverSubtotal += product.price * item.quantity;
     }
 
-    // 🚀 4. THE SMART COUPON ENGINE
+    // --- 🚀 Process Custom Items (Secure Server-Side Pricing) ---
+    for (const item of customItems) {
+      serverSubtotal += 299 * item.quantity; // Hacker price change nahi kar sakta!
+    }
+
+    // 🚀 5. THE SMART COUPON ENGINE
     let serverDiscount = 0;
     
     if (couponCode) {
       const codeUpper = couponCode.toUpperCase();
 
       if (codeUpper === "STICKY10") {
-        // --- 🛑 HACK 1: "Baar-Baar Use" (One-time use check) ---
         const pastUsage = await prisma.order.findFirst({
           where: { 
             phone: customerDetails.phone, 
@@ -79,28 +93,24 @@ export async function POST(req: Request) {
           return NextResponse.json({ error: "Aap is code ko pehle hi use kar chuke hain! Naye offers try karein. 😉" }, { status: 400 });
         }
 
-        // --- 🔍 Find their Last Order ---
         const lastOrder = await prisma.order.findFirst({
           where: { phone: customerDetails.phone, status: { not: "CANCELLED" } },
           orderBy: { createdAt: 'desc' }
         });
 
         if (!lastOrder) {
-          // --- 🛑 HACK 2: "Naya Dost Scam" (First Time Buyer Welcome Discount) ---
           serverDiscount = Math.round(serverSubtotal * 0.10); 
         } else {
-          // --- 🛑 HACK 3 & 4: "Dynamic Expiry & Shipping Grace Period" ---
           const fortyDaysAgo = new Date();
           fortyDaysAgo.setDate(fortyDaysAgo.getDate() - 40);
 
           if (lastOrder.createdAt >= fortyDaysAgo) {
-            serverDiscount = Math.round(serverSubtotal * 0.10); // Active within 40 days
+            serverDiscount = Math.round(serverSubtotal * 0.10); 
           } else {
             return NextResponse.json({ error: "Yeh code aapke last order ke 30 din tak hi valid tha. Agli baar jaldi aana! ⏰" }, { status: 400 });
           }
         }
       } else {
-        // --- 🏷️ STANDARD DATABASE COUPONS ---
         const coupon = await prisma.coupon.findUnique({ where: { code: codeUpper } });
         if (coupon && coupon.isActive && new Date() <= new Date(coupon.endDate)) {
           if (!coupon.usageLimit || coupon.usedCount < coupon.usageLimit) {
@@ -118,8 +128,8 @@ export async function POST(req: Request) {
 
     const serverFinalAmount = serverSubtotal - serverDiscount;
 
-    // 🏗️ 5. DATABASE TRANSACTION (All or Nothing)
-    const result = await prisma.$transaction(async (tx) => {
+    // 🏗️ 6. DATABASE TRANSACTION (🚀 NAYA: Type add kiya tx mein)
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Create Order
       const order = await tx.order.create({
         data: {
@@ -127,34 +137,50 @@ export async function POST(req: Request) {
           email: customerDetails.email,
           phone: customerDetails.phone,
           address: `${customerDetails.address}, ${customerDetails.city}, ${customerDetails.state} - ${customerDetails.pincode}`,
+          city: customerDetails.city,
+          state: customerDetails.state,
+          pincode: customerDetails.pincode,
+          subtotal: serverSubtotal,
+          discountAmount: serverDiscount,
           amount: serverFinalAmount,
           paymentId: razorpay_payment_id,
+          razorpayOrderId: razorpay_order_id,
           status: "PAID",
-          discountAmount: serverDiscount,
           couponCode: couponCode,
           items: {
             create: cartItems.map((item) => {
-              const p = dbProducts.find(prod => prod.id === item.id)!;
-              return {
-                productId: item.id,
-                title: p.title,
-                price: p.price, // Saving frozen price at time of purchase
-                quantity: item.quantity,
-              };
+              const isCustom = item.id.startsWith("custom-mug-");
+              
+              if (isCustom) {
+                return {
+                  title: "Premium Custom Photo Mug",
+                  price: 299, 
+                  quantity: item.quantity,
+                  customImage: item.image, 
+                };
+              } else {
+                const p = dbProducts.find(prod => prod.id === item.id)!;
+                return {
+                  productId: item.id,
+                  title: p.title,
+                  price: p.price, 
+                  quantity: item.quantity,
+                  image: p.images[0] || null
+                };
+              }
             }),
           },
         },
       });
 
-      // Update Stock for each product
-      for (const item of cartItems) {
+      // Update Stock ONLY for standard products
+      for (const item of standardItems) {
         await tx.product.update({
           where: { id: item.id },
           data: { stock: { decrement: item.quantity } }
         });
       }
 
-      // Update DB Coupon Usage (Skip if it's our custom STICKY10 code to avoid Prisma errors)
       if (couponCode && couponCode.toUpperCase() !== "STICKY10") {
         await tx.coupon.update({
           where: { code: couponCode.toUpperCase() },

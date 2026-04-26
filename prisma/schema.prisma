@@ -128,14 +128,14 @@ model OrderItem {
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  productId String
-  // Snapshot Protection (Safe Relation)
+  productId String?  // Snapshot Protection (Safe Relation)
   product   Product? @relation(fields: [productId], references: [id])
 
   title    String
   quantity Int
   price    Float
   image    String? // Product snapshot
+  customImage String? // 👈 NAYA: Yahan customer ke mug ki photo ka link save hoga
 }
 
 // ==========================================
@@ -182,9 +182,10 @@ model Coupon {
   usageLimit   Int?
   usedCount    Int          @default(0)
   isActive     Boolean      @default(true)
-
+  description  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
 }
 
 // ==========================================

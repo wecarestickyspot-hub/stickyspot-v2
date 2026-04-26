@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate"
@@ -20,7 +20,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",
     "nanoid": "^5.1.6",
-    "next": "16.1.2",
+    "next": "^16.2.4",
     "next-cloudinary": "^6.17.5",
     "razorpay": "^2.9.6",
     "react": "19.2.3",

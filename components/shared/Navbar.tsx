@@ -5,7 +5,7 @@ import { ShoppingBag, Search, User, Menu, LayoutDashboard, X, Package, Heart } f
 import { useCartStore } from '@/store/useCartStore';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { SignInButton, SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
-import SearchInput from '@/components/shared/SearchInput'; 
+import SearchInput from '@/components/shared/SearchInput';
 
 export default function Navbar() {
   const { user } = useUser();
@@ -63,7 +63,7 @@ export default function Navbar() {
 
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscKey);
-    
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleEscKey);
@@ -79,7 +79,7 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* 🛡️ FIX 6: Safer layout without fragile absolute positioning */}
           <div className="flex justify-between items-center h-20 gap-4">
-            
+
             {/* Logo */}
             <div className="flex-shrink-0 flex items-center z-20">
               <Link href="/" className="text-2xl font-black tracking-tighter text-slate-900 group drop-shadow-sm">
@@ -90,15 +90,15 @@ export default function Navbar() {
             {/* MIDDLE SECTION (Dynamic Flex) */}
             <div className="flex-1 flex justify-center z-10 px-2 lg:px-8">
               {showSearch ? (
-                <div 
+                <div
                   ref={searchRef}
                   className="w-full max-w-xl flex items-center gap-2 sm:gap-3 relative animate-in fade-in zoom-in duration-200"
                 >
                   <div className="flex-1">
-                     <SearchInput />
+                    <SearchInput />
                   </div>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     aria-label="Close search" // 🛡️ FIX 3: a11y
                     onClick={() => setShowSearch(false)}
                     className="shrink-0 text-slate-400 hover:text-rose-600 transition-colors bg-white/50 p-2.5 rounded-full backdrop-blur-sm border border-slate-200 shadow-sm hover:bg-rose-50 hover:border-rose-200"
@@ -108,7 +108,9 @@ export default function Navbar() {
                 </div>
               ) : (
                 <div className="hidden md:flex space-x-8 lg:space-x-10 items-center text-sm font-bold text-slate-600">
-                  <Link href="/shop" className="hover:text-indigo-600 transition-colors">Latest Drops</Link>
+                  <Link href="/custom-mugs" className="text-indigo-600 font-bold hover:text-indigo-700 transition-colors flex items-center gap-1">
+                    🎁 Custom Mugs
+                  </Link>
                   <Link href="/custom" className="hover:text-indigo-600 transition-colors">Create Custom</Link>
                   <Link href="/shop?category=All" className="hover:text-indigo-600 transition-colors">Shop All</Link>
 
@@ -124,8 +126,8 @@ export default function Navbar() {
             {/* RIGHT SECTION */}
             <div className="flex items-center space-x-1 sm:space-x-3 text-slate-500 z-20">
               {!showSearch && (
-                <button 
-                  onClick={() => setShowSearch(true)} 
+                <button
+                  onClick={() => setShowSearch(true)}
                   aria-label="Open search" // 🛡️ FIX 3: a11y
                   className="hover:text-indigo-600 transition-colors p-2 rounded-full hover:bg-white/40"
                 >
@@ -138,7 +140,7 @@ export default function Navbar() {
                   <Package size={22} strokeWidth={2} />
                 </Link>
                 <Link href="/wishlist" aria-label="My Wishlist" className="hover:text-pink-500 transition-colors p-2 rounded-full hover:bg-white/40 hidden sm:block">
-                   <Heart size={22} strokeWidth={2} />
+                  <Heart size={22} strokeWidth={2} />
                 </Link>
               </SignedIn>
 
@@ -158,17 +160,17 @@ export default function Navbar() {
               </div>
 
               {/* CART BUTTON */}
-              <button 
+              <button
                 onClick={() => setIsOpen(true)}
                 aria-label={`Open cart with ${totalItems} items`} // 🛡️ FIX 3: a11y
-                className="relative group p-2 rounded-full hover:bg-white/40 transition-all duration-300 ease-in-out" 
+                className="relative group p-2 rounded-full hover:bg-white/40 transition-all duration-300 ease-in-out"
               >
-                <ShoppingBag 
-                  size={22} 
+                <ShoppingBag
+                  size={22}
                   strokeWidth={2}
-                  className="text-slate-500 group-hover:text-indigo-600 group-hover:scale-110 transition-all duration-300" 
+                  className="text-slate-500 group-hover:text-indigo-600 group-hover:scale-110 transition-all duration-300"
                 />
-                
+
                 {mounted && totalItems > 0 && (
                   <span className="absolute top-0.5 right-0.5 h-4 w-4 flex items-center justify-center rounded-full bg-indigo-600 text-[9px] font-bold text-white shadow-sm border border-white/50 transform translate-x-1/4 -translate-y-1/4 group-hover:bg-indigo-700 transition-colors">
                     {totalItems}
@@ -177,7 +179,7 @@ export default function Navbar() {
               </button>
 
               {!showSearch && (
-                <button 
+                <button
                   onClick={toggleMobileMenu}
                   aria-expanded={isMobileMenuOpen} // 🛡️ FIX 3: a11y
                   aria-label="Toggle mobile menu"
@@ -194,19 +196,19 @@ export default function Navbar() {
       {/* MOBILE MENU */}
       {isMobileMenuOpen && (
         <>
-          <div 
+          <div
             className="fixed inset-0 bg-slate-900/10 backdrop-blur-[2px] z-40 md:hidden animate-in fade-in duration-300"
             onClick={closeMobileMenu}
             aria-hidden="true"
           />
-          
-          <div 
+
+          <div
             ref={mobileMenuRef}
             className="fixed top-20 left-0 w-full h-[calc(100vh-5rem)] bg-white/70 backdrop-blur-2xl border-t border-white/60 z-50 md:hidden animate-in slide-in-from-top-4 duration-400 shadow-[0_30px_60px_rgba(0,0,0,0.1)] overflow-y-auto rounded-b-[2.5rem]"
           >
             <div className="flex flex-col h-full p-6 space-y-6 pt-8">
               <div className="flex flex-col space-y-3 text-base font-bold text-slate-700 flex-1">
-                
+
                 <Link href="/shop" onClick={closeMobileMenu} className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-white/40 hover:bg-white/80 hover:text-indigo-600 transition-all group border border-white/50 shadow-sm">
                   <ShoppingBag size={22} className="text-slate-500 group-hover:text-indigo-500 group-hover:scale-110 transition-all" />
                   <span>Latest Drops</span>
