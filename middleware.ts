@@ -4,17 +4,19 @@ import { Roles } from "@/types/globals";
 
 // 1. PUBLIC ROUTES (Sirf wahi jo sach mein open hone chahiye)
 const isPublicRoute = createRouteMatcher([
-  "/",                // Home
-  "/shop(.*)",        // Shop
-  "/product(.*)",   // Product Details
+  "/",                  // Home
+  "/shop(.*)",          // Shop
+  "/product(.*)",       // Product Details
   "/custom(.*)",    
-  "/cart",            // Cart
-  "/legal(.*)",       // 🚀 FIX: Privacy Policy, Terms, Refund, Shipping aadi ke liye
-  "/contact",         // 🚀 FIX: Contact Us page
-  "/api/webhooks(.*)",// Webhooks open for Razorpay/Stripe (Server-to-Server)
+  "/cart",              // Cart
+  "/legal(.*)",         // 🚀 Privacy Policy, Terms, Refund, Shipping aadi ke liye
+  "/contact",           // 🚀 Contact Us page
+  "/api/webhooks(.*)",  // Webhooks open for Razorpay/Stripe (Server-to-Server)
   "/api/razorpay(.*)",
-  "/sign-in(.*)",     // Login Page
-  "/sign-up(.*)"      // Signup Page
+  "/sign-in(.*)",       // Login Page
+  "/sign-up(.*)",       // Signup Page (🚀 Fixed: Comma added here)
+  "/sitemap.xml",       // 🚀 NAYA: Google Bots ke liye bypass
+  "/robots.txt"         // 🚀 NAYA: Robots.txt bypass
 ]);
 
 // 🚨 NOTE: /checkout, /api/razorpay, and /api/order are REMOVED from here.
