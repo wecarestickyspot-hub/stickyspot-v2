@@ -8,9 +8,11 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
       disallow: [
-        '/admin',      // Admin panel chhupa do
-        '/api',        // API routes ki zarurat nahi
+        '/admin',      // Admin panel chhupa do (Security)
+        '/api',        // API routes ki zarurat nahi (Saves crawl budget)
         '/checkout',   // Personal details pages
+        '/cart',       // Cart page private hona chahiye
+        '/orders',     // Order success/history pages ko hide karo
         '/sign-in',    // Auth pages
         '/sign-up',
       ],

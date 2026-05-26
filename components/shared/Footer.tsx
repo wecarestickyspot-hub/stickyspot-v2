@@ -92,7 +92,7 @@ export default function Footer() {
             <ul className="space-y-4">
               <li><Link href="/legal/privacy-policy" className="hover:text-indigo-600 hover:translate-x-1 inline-block transition-all">Privacy Policy</Link></li>
               <li><Link href="/legal/terms-and-conditions" className="hover:text-indigo-600 hover:translate-x-1 inline-block transition-all">Terms & Conditions</Link></li>
-              <li><Link href="/legal/refund-policy" className="hover:text-indigo-600 hover:translate-x-1 inline-block transition-all">Refund & Cancellation</Link></li>
+              <li><Link href="/legal/refund-policy" className="hover:text-indigo-600 hover:translate-x-1 inline-block transition-all">Refund-Policy</Link></li>
               <li><Link href="/legal/shipping-policy" className="hover:text-indigo-600 hover:translate-x-1 inline-block transition-all">Shipping Policy</Link></li>
               <li><Link href="/contact" className="hover:text-indigo-600 hover:translate-x-1 inline-block transition-all">Contact Us</Link></li>
             </ul>

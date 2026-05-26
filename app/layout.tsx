@@ -11,7 +11,7 @@ import AnnouncementBar from "@/components/shared/AnnouncementBar";
 import Navbar from "@/components/shared/Navbar";
 import { cache } from "react";
 
-// 🛡️ Google Analytics ki official library (Next.js isko by default optimize karta hai)
+// 🛡️ Google Analytics ki official library
 import { GoogleAnalytics } from '@next/third-parties/google';
 
 // ⚡ FIX 3: Lazy Loading (CartDrawer sirf tab load hoga jab client-side ready ho)
@@ -26,33 +26,75 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-  display: "swap", // 🚀 LCP FIX: Same here!
+  display: "swap", 
 });
 
 // ⚡ FIX 1: Layout Revalidation (Settings DB ko har 1 ghante mein sirf ek baar hit karega)
 export const revalidate = 3600;
 
-// 🚀 FIX 4: Advanced Dynamic SEO Metadata (Template + OpenGraph)
+// 🚀 10X ADVANCED SEO METADATA
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://stickyspot.in"),
   title: {
-    default: "StickySpot | Premium Waterproof Stickers",
+    default: "StickySpot | Premium Vinyl Stickers & Custom Mugs",
     template: "%s | StickySpot",
   },
-  description: "Discover industrial-grade, waterproof vinyl stickers for developers, creators, and artists.",
+  description: "Upgrade your workspace with industrial-grade, waterproof vinyl stickers and premium custom ceramic mugs. Built for developers, creators, and artists in India.",
+  keywords: [
+    "premium stickers", 
+    "laptop stickers India", 
+    "custom mugs online", 
+    "waterproof vinyl stickers", 
+    "developer stickers", 
+    "StickySpot",
+    "anime stickers"
+  ],
+  authors: [{ name: "StickySpot Team" }],
+  creator: "StickySpot",
+  publisher: "StickySpot",
+  alternates: {
+    canonical: "/", // Duplicate content penalty se bachayega
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   verification: {
-    // 🔍 Yahan apna Google Search Console ka code dalna (milne ke baad)
-    google: "google-site-verification-code", 
+    // ⚠️ GOOGLE SEARCH CONSOLE STRING YAHAN PASTE KAREIN 👇
+    google: "YAHAN_APNA_COPY_KIYA_HUA_CODE_PASTE_KAREIN", 
   },
   openGraph: {
-    title: "StickySpot - Premium Stickers",
-    description: "Coolest stickers for devs and creators.",
-    type: "website",
+    title: "StickySpot | Premium Stickers & Custom Mugs",
+    description: "Upgrade your workspace with premium waterproof stickers and personalized mugs.",
+    url: "https://stickyspot.in",
     siteName: "StickySpot",
+    images: [
+      {
+        url: "/og-image.jpg", // 💡 Tip: public folder mein 'og-image.jpg' naam ki ek 1200x630px banner photo daal dena
+        width: 1200,
+        height: 630,
+        alt: "StickySpot Premium Merchandise",
+      },
+    ],
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "StickySpot | Premium Stickers & Custom Mugs",
+    description: "Upgrade your workspace with premium waterproof stickers and personalized mugs. Fast shipping across India.",
+    images: ["/og-image.jpg"],
   },
 };
 
-// ⚡ FIX 2: React Cache (Agar same request mein 2 jagah settings chahiye, toh DB call 1 hi bar jayega)
+// ⚡ FIX 2: React Cache 
 const getGlobalSettings = cache(async () => {
   try {
     return await prisma.storeSettings.findUnique({
@@ -112,7 +154,7 @@ export default async function RootLayout({
           
         </ClerkProvider>
 
-        {/* 📊 Google Analytics Setup (Already non-blocking) */}
+        {/* 📊 Google Analytics Setup */}
         <GoogleAnalytics gaId="G-1TF3QR67M8" />
       </body>
     </html>
